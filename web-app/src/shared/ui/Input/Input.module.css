@@ -1,0 +1,28 @@
+.input {
+  width: 100%;
+  padding: var(--cd-space-2) var(--cd-space-3);
+  font-family: var(--cd-font-body);
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text);
+  background: var(--cd-surface);
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+  outline: none;
+  transition:
+    border-color var(--cd-duration-base) var(--cd-ease-out),
+    box-shadow var(--cd-duration-base) var(--cd-ease-out);
+}
+
+.input::placeholder {
+  color: var(--cd-text-subtle);
+}
+
+.input:focus {
+  border-color: var(--cd-primary);
+  box-shadow: var(--cd-focus-ring);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,5 @@
+package: httpserver
+generate:
+  echo-server: true
+  models: true
+output: internal/http/gen/http.server.go

@@ -1,0 +1,50 @@
+.form {
+  display: grid;
+  gap: var(--cd-space-5);
+}
+
+.actions {
+  display: grid;
+  gap: var(--cd-space-3);
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-primary);
+  font-weight: var(--cd-weight-medium);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cd-space-1);
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+}
+
+.footer button {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-primary);
+  font-weight: var(--cd-weight-medium);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.footer button:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,79 @@
+version: "3"
+
+dotenv: ['.env']
+
+vars:
+  NETWORK_NAME: traefik
+  GOOSE_IMAGE: kukymbr/goose-docker:3.27.1
+  GOOSE_DRIVER: postgres
+  GOOSE_DBSTRING: 'host={{.POSTGRES_HOST}} port={{.POSTGRES_PORT}} user={{.POSTGRES_USER}} password={{.POSTGRES_PASSWORD}} dbname={{.POSTGRES_DB}} sslmode={{.POSTGRES_SSL_MODE}}'
+
+tasks:
+  create-network:
+    desc: "Create Docker network"
+    cmds:
+      - docker network create {{.NETWORK_NAME}} || true
+
+  start-proxy:
+    desc: "Start Traefik proxy"
+    cmds:
+      - docker rm -f traefik || true
+      - |
+        docker run -d --rm \
+          --name traefik \
+          --network {{.NETWORK_NAME}} \
+          -p 80:80 \
+          -p 443:443 \
+          -v /var/run/docker.sock:/var/run/docker.sock:ro \
+          traefik:v3.6 \
+          --providers.docker=true \
+          --providers.docker.exposedbydefault=false \
+          --entrypoints.web.address=:80 \
+
+  go:
+    desc: Execute go command in container
+    cmds:
+      - |
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -v $(pwd):/app \
+          -w /app \
+          golang:1.26.4-alpine3.23 \
+          go {{.CLI_ARGS}}
+
+  codegen:
+    desc: "Compile TypeSpec -> OpenAPI -> Go code"
+    cmds:
+      - cd typespec && npx tsp compile src/main.tsp
+      - oapi-codegen -config codegen.yaml openapi/openapi.yaml
+
+  mocks:
+    desc: "Generate uber-go mock mocks"
+    cmds:
+      - mockgen -source=internal/services/ci_report/ci_report.go -destination=internal/services/ci_report/mocks/ci_report_mocks.go -package=mocks -mock_names=reportCache=MockReportCache
+
+  deploy:
+    desc: "Deploy application stack"
+    cmds:
+      - task: start-proxy
+      - docker compose up -d --force-recreate
+
+  stop:
+    desc: "Stop application stack"
+    cmds:
+      - docker compose down -v
+
+  goose:
+    desc: "Run goose CLI (e.g. task goose -- up, task goose -- status, task goose -- create notifications sql)"
+    cmds:
+      - |
+        docker run --rm \
+          --user "$(id -u):$(id -g)" \
+          -v ./migrations:/migrations \
+          --network {{.NETWORK_NAME}} \
+          --entrypoint /bin/goose \
+          {{.GOOSE_IMAGE}} \
+          -dir /migrations \
+          {{.GOOSE_DRIVER}} \
+          "{{.GOOSE_DBSTRING}}" \
+          {{.CLI_ARGS}}

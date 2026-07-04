@@ -1,0 +1,113 @@
+.accountCard {
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  background: var(--cd-surface);
+  overflow: hidden;
+}
+
+.header {
+  padding: var(--cd-space-4) var(--cd-space-5);
+  border-bottom: var(--cd-border-thin) solid var(--cd-border-muted);
+  font-weight: var(--cd-weight-bold);
+  font-size: var(--cd-text-md);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cd-space-4);
+  padding: var(--cd-space-3) var(--cd-space-5);
+  border-bottom: var(--cd-border-thin) solid var(--cd-border-soft);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowAvatar {
+  composes: row;
+  padding: var(--cd-space-4) var(--cd-space-5);
+}
+
+.label {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+  font-weight: var(--cd-weight-medium);
+}
+
+.value {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text);
+  text-align: right;
+  line-height: var(--cd-leading-relaxed);
+  overflow-wrap: anywhere;
+  max-width: min(420px, 65%);
+}
+
+.avatarBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 0;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--cd-surface);
+  color: var(--cd-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--cd-text-xl);
+  font-weight: var(--cd-weight-bold);
+  border: var(--cd-border-base) solid var(--cd-border);
+  overflow: hidden;
+  transition:
+    border-color var(--cd-duration-fast),
+    box-shadow var(--cd-duration-fast);
+}
+
+.avatar img,
+.avatarLarge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarBtn:hover .avatar {
+  border-color: var(--cd-primary);
+  box-shadow: 0 0 0 3px var(--cd-primary-soft);
+}
+
+.avatarLarge {
+  width: 192px;
+  height: 192px;
+  border-radius: 50%;
+  background: var(--cd-surface);
+  color: var(--cd-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  font-weight: var(--cd-weight-bold);
+  border: var(--cd-border-base) solid var(--cd-border);
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+@media (max-width: 560px) {
+  .row {
+    display: grid;
+    gap: var(--cd-space-1);
+  }
+
+  .value {
+    max-width: none;
+    text-align: left;
+  }
+}

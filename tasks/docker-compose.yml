@@ -1,0 +1,64 @@
+x-postgres-vars: &postgres-env
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  POSTGRES_PORT: ${POSTGRES_PORT}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-disable}
+
+x-app-vars: &app-env
+  APP_ENV: ${APP_ENV:-local}
+  SERVER_PORT: ${SERVER_PORT:-8080}
+  JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
+  CORS_ORIGINS: ${CORS_ORIGINS:-*}
+  CORS_METHODS: ${CORS_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
+  CORS_HEADERS: ${CORS_HEADERS:-Authorization,Content-Type}
+  ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+  REFRESH_TOKEN_LEN: ${REFRESH_TOKEN_LEN:-32}
+  GIT_TASKS_CLIENT_TOKEN: ${GIT_TASKS_CLIENT_TOKEN}
+  GIT_TASKS_CLIENT_BASE_URL: ${GIT_TASKS_CLIENT_BASE_URL}
+  USERS_CLIENT_TOKEN: ${USERS_CLIENT_TOKEN}
+  USERS_CLIENT_BASE_URL: ${USERS_CLIENT_BASE_URL}
+  <<: *postgres-env
+
+services:
+  # Бекенд сервис (hot-reload через air)
+  rest:
+    container_name: tasks_http
+    networks:
+      - traefik
+    build:
+      context: .
+      dockerfile: build/local/Dockerfile
+    environment:
+      <<: *app-env
+    volumes:
+      - ./:/app
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.tasks-service.rule=Host(`codurity.ai`) && (PathPrefix(`/api/v1/tasks`) || PathPrefix(`/api/v1/reports`))
+      - traefik.http.routers.tasks-service.entrypoints=web
+      - traefik.http.services.tasks-service.loadbalancer.server.port=${SERVER_PORT:-8080}
+
+  # PostgreSQL
+  database:
+    container_name: tasks_postgres
+    networks:
+      - traefik
+    image: postgres:17-alpine3.23
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+networks:
+  traefik:
+    external: true
+
+volumes:
+  postgres_data:

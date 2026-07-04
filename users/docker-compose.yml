@@ -1,0 +1,96 @@
+x-postgres-vars: &postgres-env
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  POSTGRES_PORT: ${POSTGRES_PORT}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-disable}
+
+x-nats-vars: &nats-env
+  NATS_USER: ${NATS_USER}
+  NATS_PASSWORD: ${NATS_PASSWORD}
+  NATS_HOST: ${NATS_HOST}
+  NATS_PORT: ${NATS_PORT}
+
+x-app-vars: &app-env
+  APP_ENV: ${APP_ENV:-local}
+  SERVER_PORT: ${SERVER_PORT:-8080}
+  JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
+  SERVICE_TOKEN: ${SERVICE_TOKEN}
+  CORS_ORIGINS: ${CORS_ORIGINS:-*}
+  CORS_METHODS: ${CORS_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
+  CORS_HEADERS: ${CORS_HEADERS:-Authorization,Content-Type}
+  ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+  REFRESH_TOKEN_LEN: ${REFRESH_TOKEN_LEN:-32}
+  AVATAR_DIR: ${AVATAR_DIR:-./uploads/avatars}
+  AVATAR_PUBLIC: ${AVATAR_PUBLIC:-/uploads/avatars}
+  HTTP_CLIENT_GIT_AUTH_CLIENT_TOKEN: ${HTTP_CLIENT_GIT_AUTH_CLIENT_TOKEN}
+  HTTP_CLIENT_GIT_AUTH_CLIENT_BASE_URL: ${HTTP_CLIENT_GIT_AUTH_CLIENT_BASE_URL}
+  <<: [*postgres-env, *nats-env]
+
+services:
+# Бекенд сервис, запускающийся в режиме hot-reload с помошью air
+  rest:
+    container_name: users_http
+    networks:
+      - traefik
+    build:
+      context: .
+      dockerfile: build/local/Dockerfile
+    environment:
+      <<: *app-env
+    volumes:
+      - ./:/app
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.users-service.rule=Host(`codurity.ai`) && (PathPrefix(`/api/v1/profile`) || PathPrefix(`/uploads/avatars`) || PathPrefix(`/api/v1/git-user`))
+      - traefik.http.routers.users-service.entrypoints=web
+      - traefik.http.services.users-service.loadbalancer.server.port=${SERVER_PORT:-8080}
+
+# воркер, обрабатывающий события из NATS
+  worker:
+    container_name: users_worker
+    networks:
+      - traefik
+    build:
+      context: .
+      dockerfile: build/local-worker/Dockerfile
+    environment:
+      <<: *app-env
+    volumes:
+      - ./:/app
+
+# sql база данных PostgreSQL 
+  database:
+    container_name: users_postgres
+    networks:
+      - traefik
+    image: postgres:17-alpine3.23
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# асинхронный брокер сообщений Nats
+  # broker_nats:
+  #   container_name: nats
+  #   networks:
+  #     - traefik
+  #   image: nats:2.14-alpine3.22
+  #   command: nats-server --user ${NATS_USER} --pass ${NATS_PASSWORD} -m 8222
+  #   ports:
+  #     - "8222:8222"
+  #     - "4222:4222"
+
+networks:
+  traefik:
+    external: true
+
+# том для хранения данных PostgreSQL и аватаров
+volumes:
+  postgres_data:

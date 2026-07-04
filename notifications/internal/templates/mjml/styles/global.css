@@ -1,0 +1,36 @@
+/* ==========================================================================
+   CODURITY EMAIL STYLES
+   global.css
+
+   В email нельзя надёжно полагаться на CSS variables как во frontend UI.
+   Поэтому брендовые значения продублированы обычными hex/rgb.
+   Критичные стили всё равно лучше задавать через MJML атрибуты.
+   ========================================================================== */
+
+.cd-muted a,
+.cd-footer a,
+.cd-link a {
+  color: #1758d1 !important;
+  text-decoration: none !important;
+}
+
+.cd-code-box div {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace !important;
+}
+
+.cd-code-value div {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace !important;
+  letter-spacing: 8px !important;
+}
+
+.cd-footer div {
+  color: #7a8494 !important;
+}
+
+@media only screen and (max-width: 600px) {
+  .cd-code-value div {
+    font-size: 30px !important;
+    line-height: 38px !important;
+    letter-spacing: 5px !important;
+  }
+}

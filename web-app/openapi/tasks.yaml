@@ -1,0 +1,875 @@
+openapi: 3.0.0
+info:
+  title: Tasks Service
+  version: 0.0.0
+tags: []
+paths:
+  /reports:
+    post:
+      operationId: reports.create
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+    get:
+      operationId: reports.list
+      parameters:
+        - name: task_name
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ReportStatus'
+          explode: false
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            default: 20
+          explode: false
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportListResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /reports/{reportId}:
+    get:
+      operationId: reports.get
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /tasks:
+    post:
+      operationId: tasks.create
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      security:
+        - BearerAuth: []
+    get:
+      operationId: tasks.list
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            default: 20
+          explode: false
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: languages
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: task_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TaskType'
+          explode: false
+        - name: level
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Level'
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /tasks/languages:
+    get:
+      operationId: tasks.languages.list
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Language'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /tasks/tags:
+    get:
+      operationId: tasks.tags.list
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /tasks/{task_id}:
+    get:
+      operationId: tasks.get
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+    patch:
+      operationId: tasks.update
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      security:
+        - BearerAuth: []
+    delete:
+      operationId: tasks.delete
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /tasks/{task_name}/git:
+    post:
+      operationId: tasks.git.create
+      parameters:
+        - name: task_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitTaskResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GitTaskRequest'
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    CreateReportRequest:
+      type: object
+      required:
+        - uid
+        - commit
+        - status
+        - created_at
+        - summary
+        - steps
+        - lint_errors
+        - warnings
+        - raw_log_available
+      properties:
+        uid:
+          type: string
+        commit:
+          type: string
+        run_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        created_at:
+          type: string
+          format: date-time
+        summary:
+          $ref: '#/components/schemas/ReportSummary'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportStep'
+        lint_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportLintError'
+        warnings:
+          type: array
+          items:
+            type: string
+        raw_log_available:
+          type: boolean
+    CreateTaskRequest:
+      type: object
+      required:
+        - task_name
+        - title
+        - description
+        - specification_md_text
+        - task_type
+        - level
+        - tag_ids
+        - language_ids
+      properties:
+        task_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        specification_md_text:
+          type: string
+        task_type:
+          $ref: '#/components/schemas/TaskType'
+        level:
+          $ref: '#/components/schemas/Level'
+        tag_ids:
+          type: array
+          items:
+            type: string
+        language_ids:
+          type: array
+          items:
+            type: string
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - INVALID_JSON
+        - MISSING_AUTH_TOKEN
+        - INVALID_AUTH_TOKEN
+        - EXPIRED_AUTH_TOKEN
+        - NOT_FOUND
+        - INTERNAL_ERROR
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+    GitTaskRequest:
+      type: object
+      required:
+        - task_name
+      properties:
+        task_name:
+          type: string
+    GitTaskResponse:
+      type: object
+      required:
+        - task_name
+        - repo
+        - clone_url
+      properties:
+        task_name:
+          type: string
+        repo:
+          type: string
+        clone_url:
+          type: string
+    Language:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Level:
+      type: string
+      enum:
+        - junior
+        - middle
+        - senior
+    PageInfo:
+      type: object
+      required:
+        - has_next_page
+      properties:
+        has_next_page:
+          type: boolean
+        next_cursor:
+          type: string
+    Report:
+      type: object
+      required:
+        - id
+        - uid
+        - commit
+        - status
+        - created_at
+        - summary
+        - steps
+        - lint_errors
+        - warnings
+        - raw_log_available
+      properties:
+        id:
+          type: string
+        uid:
+          type: string
+        commit:
+          type: string
+        run_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        created_at:
+          type: string
+          format: date-time
+        summary:
+          $ref: '#/components/schemas/ReportSummary'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportStep'
+        lint_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportLintError'
+        warnings:
+          type: array
+          items:
+            type: string
+        raw_log_available:
+          type: boolean
+    ReportLintError:
+      type: object
+      required:
+        - file
+        - line
+        - col
+        - rule
+        - message
+      properties:
+        file:
+          type: string
+        line:
+          type: integer
+        col:
+          type: integer
+        rule:
+          type: string
+        message:
+          type: string
+    ReportListResponse:
+      type: object
+      required:
+        - items
+        - page_info
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+    ReportStatus:
+      type: string
+      enum:
+        - pending
+        - passed
+        - failed
+    ReportStep:
+      type: object
+      required:
+        - index
+        - name
+        - status
+      properties:
+        index:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - passed
+            - failed
+            - blocked
+            - warning
+        code:
+          type: string
+        failure:
+          type: string
+        http_status:
+          type: string
+    ReportSummary:
+      type: object
+      required:
+        - status
+        - message
+        - passed
+        - failed
+        - blocked
+        - warnings
+      properties:
+        status:
+          type: string
+          enum:
+            - passed
+            - failed
+        message:
+          type: string
+        root_cause:
+          type: string
+        passed:
+          type: integer
+        failed:
+          type: integer
+        blocked:
+          type: integer
+        warnings:
+          type: integer
+    Tag:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Task:
+      type: object
+      required:
+        - id
+        - task_name
+        - title
+        - description
+        - specification_md_text
+        - task_type
+        - level
+        - tags
+        - languages
+        - created_at
+      properties:
+        id:
+          type: string
+        task_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        specification_md_text:
+          type: string
+        task_type:
+          $ref: '#/components/schemas/TaskType'
+        level:
+          $ref: '#/components/schemas/Level'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+        created_at:
+          type: string
+          format: date-time
+    TaskListItem:
+      type: object
+      required:
+        - id
+        - task_name
+        - title
+        - description
+        - task_type
+        - level
+        - tags
+        - languages
+        - created_at
+      properties:
+        id:
+          type: string
+        task_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        task_type:
+          $ref: '#/components/schemas/TaskType'
+        level:
+          $ref: '#/components/schemas/Level'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+        created_at:
+          type: string
+          format: date-time
+    TaskListResponse:
+      type: object
+      required:
+        - items
+        - page_info
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskListItem'
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+    TaskType:
+      type: string
+      enum:
+        - backend
+        - frontend
+    UpdateTaskRequest:
+      type: object
+      properties:
+        task_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        specification_md_text:
+          type: string
+        task_type:
+          $ref: '#/components/schemas/TaskType'
+        level:
+          $ref: '#/components/schemas/Level'
+        tag_ids:
+          type: array
+          items:
+            type: string
+        language_ids:
+          type: array
+          items:
+            type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: Bearer

@@ -1,0 +1,19 @@
+services:
+  app:
+    image: oven/bun:1
+    working_dir: /app
+    command: bun run dev --host 0.0.0.0
+    volumes:
+      - .:/app
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${APP_HOSTNAME:-codurity.ai}`)"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+networks:
+  traefik:
+    external: true

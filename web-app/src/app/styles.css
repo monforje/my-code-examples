@@ -1,0 +1,4 @@
+@import "../shared/config/design-system/tokens.css";
+@import "../shared/config/design-system/themes.css";
+@import "../shared/config/design-system/globals.css";
+@import "./task-cards.css";

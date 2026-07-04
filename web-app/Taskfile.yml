@@ -1,0 +1,63 @@
+version: "3.11"
+
+env:
+  APP_HOSTNAME: codurity.ai
+  NETWORK_NAME: traefik
+
+tasks:
+  create-network:
+    desc: Create Docker network for Traefik
+    cmds:
+      - docker network create {{.NETWORK_NAME}} || true
+
+  start-proxy:
+    desc: Start or replace Traefik proxy
+    deps:
+      - create-network
+    cmds:
+      - docker rm -f traefik || true
+      - |
+        docker run -d --rm \
+          --name traefik \
+          --network {{.NETWORK_NAME}} \
+          -p 80:80 \
+          -p 443:443 \
+          -v /var/run/docker.sock:/var/run/docker.sock:ro \
+          traefik:v3.6 \
+          --providers.docker=true \
+          --providers.docker.exposedbydefault=false \
+          --entrypoints.web.address=:80
+
+  bun:
+    desc: Execute bun command in container
+    vars:
+      COMMAND: "{{.CLI_ARGS}}"
+    cmds:
+      - |
+        docker run --rm \
+          --network traefik \
+          --user $(id -u):$(id -g) \
+          -v $(pwd):/app \
+          -w /app \
+          oven/bun:1 \
+          bun {{.COMMAND}}
+  orval:
+    desc: Generate API client with Orval
+    cmds:
+      - task: bun
+        vars:
+          CLI_ARGS: orval
+
+  deploy:
+    desc: Deploy application
+    cmds:
+      - task: start-proxy
+      - task: bun
+        vars:
+          CLI_ARGS: install
+      - docker compose -f docker-compose.yml up -d --force-recreate
+
+  stop:
+    desc: Stop and remove containers with volumes
+    cmds:
+      - docker compose -f docker-compose.yml down -v

@@ -1,0 +1,126 @@
+/* ==========================================================================
+   CODURITY DESIGN SYSTEM
+   themes.css
+
+   Здесь лежат семантические токены темы.
+   Компоненты должны использовать именно эти токены, а не сырые цвета.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Light theme
+   База: белый фон, чёрный текст, синий как action/brand accent
+   -------------------------------------------------------------------------- */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Page */
+  --cd-bg: var(--cd-white);
+  --cd-bg-subtle: #eef3fb;
+
+  /* Surfaces */
+  --cd-surface: var(--cd-white);
+  --cd-surface-soft: #f7faff;
+  --cd-surface-muted: var(--cd-gray-50);
+  --cd-surface-inverted: var(--cd-black);
+
+  /* Text */
+  --cd-text: var(--cd-black);
+  --cd-text-muted: #5d6675;
+  --cd-text-subtle: #7a8494;
+  --cd-text-inverted: var(--cd-white);
+
+  /* Borders */
+  --cd-border: var(--cd-black);
+  --cd-border-soft: var(--cd-blue-100);
+  --cd-border-muted: var(--cd-gray-200);
+
+  /* Brand / primary */
+  --cd-primary: var(--cd-blue-700);
+  --cd-primary-hover: var(--cd-blue-800);
+  --cd-primary-active: var(--cd-blue-900);
+  --cd-primary-soft: var(--cd-blue-50);
+  --cd-primary-soft-hover: var(--cd-blue-100);
+  --cd-primary-border: var(--cd-blue-100);
+  --cd-primary-text: var(--cd-white);
+
+  /* Code */
+  --cd-code-bg: #07111f;
+  --cd-code-text: var(--cd-blue-50);
+  --cd-code-border: var(--cd-black);
+
+  /* Status */
+  --cd-success-bg: var(--cd-green-50);
+  --cd-success-text: var(--cd-green-700);
+  --cd-warning-bg: var(--cd-yellow-50);
+  --cd-warning-text: var(--cd-yellow-700);
+  --cd-danger-bg: var(--cd-red-50);
+  --cd-danger-text: var(--cd-red-700);
+
+  /* Focus */
+  --cd-focus-ring: 0 0 0 3px rgba(23, 88, 209, 0.18);
+
+  /* Shadows */
+  --cd-shadow-hard: var(--cd-shadow-hard-blue);
+  --cd-shadow-soft: var(--cd-shadow-soft-md);
+}
+
+/* --------------------------------------------------------------------------
+   Dark theme
+   База: чёрный/тёмный фон, белый текст, синий как action/brand accent
+   -------------------------------------------------------------------------- */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Page */
+  --cd-bg: #05070d;
+  --cd-bg-subtle: #020617;
+
+  /* Surfaces */
+  --cd-surface: #0c111c;
+  --cd-surface-soft: #111827;
+  --cd-surface-muted: #162033;
+  --cd-surface-inverted: var(--cd-white);
+
+  /* Text */
+  --cd-text: var(--cd-white);
+  --cd-text-muted: #a8b2c3;
+  --cd-text-subtle: #7f8ca3;
+  --cd-text-inverted: var(--cd-black);
+
+  /* Borders */
+  --cd-border: var(--cd-white);
+  --cd-border-soft: #263449;
+  --cd-border-muted: #1e293b;
+
+  /* Brand / primary */
+  --cd-primary: var(--cd-blue-500);
+  --cd-primary-hover: var(--cd-blue-400);
+  --cd-primary-active: var(--cd-blue-300);
+  --cd-primary-soft: rgba(23, 88, 209, 0.22);
+  --cd-primary-soft-hover: rgba(23, 88, 209, 0.32);
+  --cd-primary-border: rgba(117, 159, 238, 0.35);
+  --cd-primary-text: var(--cd-white);
+
+  /* Code */
+  --cd-code-bg: #020617;
+  --cd-code-text: #dbeafe;
+  --cd-code-border: var(--cd-white);
+
+  /* Status */
+  --cd-success-bg: rgba(3, 152, 85, 0.16);
+  --cd-success-text: #6ce9a6;
+  --cd-warning-bg: rgba(220, 104, 3, 0.18);
+  --cd-warning-text: #fec84b;
+  --cd-danger-bg: rgba(217, 45, 32, 0.18);
+  --cd-danger-text: #f97066;
+
+  /* Focus */
+  --cd-focus-ring: 0 0 0 3px rgba(77, 130, 233, 0.28);
+
+  /* Shadows */
+  --cd-shadow-hard: 5px 5px 0 var(--cd-blue-500);
+  --cd-shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.35);
+}

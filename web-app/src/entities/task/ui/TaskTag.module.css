@@ -1,0 +1,10 @@
+.tag {
+  display: inline-block;
+  padding: 2px var(--cd-space-2);
+  font-size: var(--cd-text-xs);
+  font-weight: var(--cd-weight-semibold);
+  color: var(--cd-text-muted);
+  background: var(--cd-surface-soft);
+  border-radius: var(--cd-radius-full);
+  line-height: 1;
+}

@@ -1,0 +1,26 @@
+.field {
+  display: grid;
+  gap: var(--cd-space-1);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: var(--cd-text-sm);
+  font-weight: var(--cd-weight-semibold);
+  color: var(--cd-text);
+}
+
+.labelExtra {
+  flex-shrink: 0;
+}
+
+.error {
+  font-size: var(--cd-text-xs);
+  color: var(--cd-danger-text);
+  margin-top: var(--cd-space-1);
+}

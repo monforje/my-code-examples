@@ -1,0 +1,13 @@
+<mj-section padding="18px 20px 36px">
+  <mj-column>
+    <mj-text css-class="cd-footer" align="center" font-size="12px" line-height="18px" color="#7a8494" padding="0 0 8px">
+      С уважением,<br />
+      команда Codurity
+    </mj-text>
+
+    <mj-text css-class="cd-footer" align="center" font-size="12px" line-height="18px" color="#7a8494" padding="0">
+      <a href="{{ .PrivacyURL }}" style="color:#1758d1;text-decoration:none;">Политика конфиденциальности</a><br />
+      Codurity, {{ .CompanyAddress }}
+    </mj-text>
+  </mj-column>
+</mj-section>

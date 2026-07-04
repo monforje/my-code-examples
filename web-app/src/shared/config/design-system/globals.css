@@ -1,0 +1,555 @@
+/* ==========================================================================
+   CODURITY DESIGN SYSTEM
+   globals.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Reset
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  font-family: var(--cd-font-body);
+  font-size: var(--cd-text-md);
+  line-height: var(--cd-leading-normal);
+  color: var(--cd-text);
+  background: var(--cd-bg);
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  color: var(--cd-primary-text);
+  background: var(--cd-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-family: var(--cd-font-heading);
+  font-weight: var(--cd-weight-extrabold);
+  line-height: var(--cd-leading-tight);
+  letter-spacing: var(--cd-tracking-heading);
+  color: var(--cd-text);
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, var(--cd-text-6xl));
+}
+
+h2 {
+  font-size: clamp(2rem, 4vw, var(--cd-text-5xl));
+}
+
+h3 {
+  font-size: var(--cd-text-3xl);
+}
+
+h4 {
+  font-size: var(--cd-text-2xl);
+}
+
+h5 {
+  font-size: var(--cd-text-xl);
+}
+
+h6 {
+  font-size: var(--cd-text-lg);
+}
+
+p {
+  margin: 0;
+  color: var(--cd-text-muted);
+  line-height: var(--cd-leading-relaxed);
+}
+
+small {
+  font-size: var(--cd-text-sm);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--cd-font-mono);
+}
+
+pre {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Layout primitives
+   -------------------------------------------------------------------------- */
+
+.cd-container {
+  width: min(100% - 32px, var(--cd-container-xl));
+  margin-inline: auto;
+}
+
+.cd-page {
+  min-height: 100vh;
+  background: var(--cd-bg);
+  color: var(--cd-text);
+}
+
+.cd-section {
+  padding-block: var(--cd-space-16);
+}
+
+.cd-stack {
+  display: grid;
+  gap: var(--cd-space-4);
+}
+
+.cd-stack-sm {
+  display: grid;
+  gap: var(--cd-space-2);
+}
+
+.cd-stack-lg {
+  display: grid;
+  gap: var(--cd-space-8);
+}
+
+.cd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--cd-space-3);
+}
+
+.cd-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cd-space-4);
+}
+
+.cd-grid {
+  display: grid;
+  gap: var(--cd-space-5);
+}
+
+.cd-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cd-space-5);
+}
+
+.cd-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cd-space-5);
+}
+
+.cd-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--cd-space-5);
+}
+
+/* --------------------------------------------------------------------------
+   Surface / Card
+   -------------------------------------------------------------------------- */
+
+.cd-surface {
+  background: var(--cd-surface);
+  color: var(--cd-text);
+}
+
+.cd-card {
+  background: var(--cd-surface);
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  padding: var(--cd-space-5);
+}
+
+.cd-card-soft {
+  background: var(--cd-surface-soft);
+  border: var(--cd-border-base) solid var(--cd-border-soft);
+  border-radius: var(--cd-radius-md);
+  padding: var(--cd-space-5);
+}
+
+.cd-card-hard {
+  background: var(--cd-surface);
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+  box-shadow: var(--cd-shadow-hard);
+  padding: var(--cd-space-5);
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+.cd-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cd-space-2);
+
+  min-height: 44px;
+  padding: 0 var(--cd-space-4);
+
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+
+  font-family: var(--cd-font-body);
+  font-size: var(--cd-text-sm);
+  font-weight: var(--cd-weight-extrabold);
+  line-height: var(--cd-leading-none);
+
+  color: var(--cd-text);
+  background: var(--cd-surface);
+
+  transition:
+    background var(--cd-duration-base) var(--cd-ease-out),
+    color var(--cd-duration-base) var(--cd-ease-out),
+    border-color var(--cd-duration-base) var(--cd-ease-out),
+    transform var(--cd-duration-fast) var(--cd-ease-out),
+    box-shadow var(--cd-duration-base) var(--cd-ease-out);
+}
+
+.cd-button:hover {
+  background: var(--cd-surface-soft);
+}
+
+.cd-button:active {
+  transform: translateY(1px);
+}
+
+.cd-button:focus-visible {
+  outline: none;
+  box-shadow: var(--cd-focus-ring);
+}
+
+.cd-button-primary {
+  color: var(--cd-primary-text);
+  background: var(--cd-primary);
+}
+
+.cd-button-primary:hover {
+  background: var(--cd-primary-hover);
+}
+
+.cd-button-soft {
+  color: var(--cd-primary);
+  background: var(--cd-primary-soft);
+  border-color: var(--cd-primary-border);
+}
+
+.cd-button-soft:hover {
+  background: var(--cd-primary-soft-hover);
+}
+
+.cd-button-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.cd-button-ghost:hover {
+  background: var(--cd-surface-soft);
+}
+
+.cd-button-sm {
+  min-height: 36px;
+  padding-inline: var(--cd-space-3);
+  font-size: var(--cd-text-xs);
+}
+
+.cd-button-lg {
+  min-height: 52px;
+  padding-inline: var(--cd-space-5);
+  font-size: var(--cd-text-md);
+}
+
+/* --------------------------------------------------------------------------
+   Badges
+   -------------------------------------------------------------------------- */
+
+.cd-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  padding: 0 var(--cd-space-2);
+
+  border: var(--cd-border-thin) solid var(--cd-border);
+  border-radius: var(--cd-radius-xs);
+
+  font-size: var(--cd-text-xs);
+  font-weight: var(--cd-weight-extrabold);
+  line-height: var(--cd-leading-none);
+
+  color: var(--cd-primary);
+  background: var(--cd-primary-soft);
+}
+
+.cd-badge-success {
+  color: var(--cd-success-text);
+  background: var(--cd-success-bg);
+  border-color: currentColor;
+}
+
+.cd-badge-warning {
+  color: var(--cd-warning-text);
+  background: var(--cd-warning-bg);
+  border-color: currentColor;
+}
+
+.cd-badge-danger {
+  color: var(--cd-danger-text);
+  background: var(--cd-danger-bg);
+  border-color: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   Forms
+   -------------------------------------------------------------------------- */
+
+.cd-field {
+  display: grid;
+  gap: var(--cd-space-2);
+}
+
+.cd-label {
+  font-size: var(--cd-text-sm);
+  font-weight: var(--cd-weight-extrabold);
+  color: var(--cd-text);
+}
+
+.cd-input,
+.cd-textarea,
+.cd-select {
+  width: 100%;
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+  padding: 0 var(--cd-space-4);
+
+  color: var(--cd-text);
+  background: var(--cd-surface);
+
+  transition:
+    border-color var(--cd-duration-base) var(--cd-ease-out),
+    box-shadow var(--cd-duration-base) var(--cd-ease-out);
+}
+
+.cd-input,
+.cd-select {
+  min-height: 46px;
+}
+
+.cd-textarea {
+  min-height: 120px;
+  padding-block: var(--cd-space-3);
+  resize: vertical;
+}
+
+.cd-input::placeholder,
+.cd-textarea::placeholder {
+  color: var(--cd-text-subtle);
+}
+
+.cd-input:focus,
+.cd-textarea:focus,
+.cd-select:focus {
+  outline: none;
+  border-color: var(--cd-primary);
+  box-shadow: var(--cd-focus-ring);
+}
+
+.cd-help-text {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
+
+.cd-table-wrap {
+  overflow: auto;
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  background: var(--cd-surface);
+}
+
+.cd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cd-text-sm);
+}
+
+.cd-table th {
+  text-align: left;
+  padding: var(--cd-space-4);
+  color: var(--cd-text-muted);
+  font-weight: var(--cd-weight-extrabold);
+  border-bottom: var(--cd-border-base) solid var(--cd-border);
+  background: var(--cd-surface-soft);
+}
+
+.cd-table td {
+  padding: var(--cd-space-4);
+  border-bottom: var(--cd-border-thin) solid var(--cd-border-soft);
+}
+
+.cd-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* --------------------------------------------------------------------------
+   Code block
+   -------------------------------------------------------------------------- */
+
+.cd-code {
+  overflow: auto;
+  padding: var(--cd-space-5);
+  border: var(--cd-border-base) solid var(--cd-code-border);
+  border-radius: var(--cd-radius-sm);
+
+  font-family: var(--cd-font-mono);
+  font-size: var(--cd-text-sm);
+  line-height: var(--cd-leading-relaxed);
+
+  color: var(--cd-code-text);
+  background: var(--cd-code-bg);
+}
+
+/* --------------------------------------------------------------------------
+   Progress
+   -------------------------------------------------------------------------- */
+
+.cd-progress {
+  height: 10px;
+  border: var(--cd-border-thin) solid var(--cd-border);
+  border-radius: var(--cd-radius-full);
+  background: var(--cd-surface);
+  overflow: hidden;
+}
+
+.cd-progress-value {
+  height: 100%;
+  background: var(--cd-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Metrics
+   -------------------------------------------------------------------------- */
+
+.cd-metric {
+  display: grid;
+  gap: var(--cd-space-2);
+}
+
+.cd-metric-label {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+}
+
+.cd-metric-value {
+  font-family: var(--cd-font-heading);
+  font-size: var(--cd-text-3xl);
+  font-weight: var(--cd-weight-extrabold);
+  letter-spacing: var(--cd-tracking-heading);
+  line-height: var(--cd-leading-none);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .cd-grid-2,
+  .cd-grid-3,
+  .cd-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-section {
+    padding-block: var(--cd-space-10);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   View Transitions — theme switch animation
+   -------------------------------------------------------------------------- */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

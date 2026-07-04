@@ -1,0 +1,44 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--cd-space-2);
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.group {
+  display: flex;
+  gap: var(--cd-space-2);
+}
+
+.separator {
+  font-family: var(--cd-font-mono);
+  font-size: var(--cd-text-2xl);
+  font-weight: var(--cd-weight-bold);
+  color: var(--cd-text-subtle);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.cell {
+  width: 52px;
+  height: 60px;
+  text-align: center;
+  font-family: var(--cd-font-mono);
+  font-size: var(--cd-text-2xl);
+  font-weight: var(--cd-weight-bold);
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+  background: var(--cd-surface);
+  color: var(--cd-text);
+  caret-color: var(--cd-primary);
+  outline: none;
+  transition:
+    border-color var(--cd-duration-base) var(--cd-ease-out),
+    box-shadow var(--cd-duration-base) var(--cd-ease-out);
+}
+
+.cell:focus {
+  border-color: var(--cd-primary);
+  box-shadow: var(--cd-focus-ring);
+}

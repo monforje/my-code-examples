@@ -1,0 +1,18 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cd-space-2);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--cd-radius-full);
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: var(--cd-text-xs);
+  font-weight: var(--cd-weight-bold);
+  color: var(--cd-text-muted);
+}

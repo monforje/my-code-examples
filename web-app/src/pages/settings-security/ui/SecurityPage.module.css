@@ -1,0 +1,59 @@
+.securityStack {
+  display: grid;
+  gap: var(--cd-space-4);
+}
+
+.securityCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cd-space-4);
+  padding: var(--cd-space-5);
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  background: var(--cd-surface);
+}
+
+.securityInfo {
+  display: grid;
+  gap: var(--cd-space-1);
+}
+
+.securityTitle {
+  font-size: var(--cd-text-md);
+  font-weight: var(--cd-weight-bold);
+  color: var(--cd-text);
+}
+
+.securityDesc {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+  line-height: var(--cd-leading-relaxed);
+}
+
+.dangerZone {
+  border: var(--cd-border-base) solid var(--cd-danger-text);
+  border-radius: var(--cd-radius-md);
+  background: var(--cd-danger-bg);
+  padding: var(--cd-space-5);
+  display: grid;
+  gap: var(--cd-space-3);
+}
+
+.dangerTitle {
+  font-size: var(--cd-text-md);
+  font-weight: var(--cd-weight-bold);
+  color: var(--cd-danger-text);
+}
+
+.dangerDesc {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+  line-height: var(--cd-leading-relaxed);
+}
+
+@media (max-width: 768px) {
+  .securityCard {
+    flex-direction: column;
+  }
+}

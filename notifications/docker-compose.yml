@@ -1,0 +1,96 @@
+x-postgres-vars: &postgres-env
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  POSTGRES_PORT: ${POSTGRES_PORT}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-disable}
+
+x-nats-vars: &nats-env
+  NATS_USER: ${NATS_USER}
+  NATS_PASSWORD: ${NATS_PASSWORD}
+  NATS_HOST: ${NATS_HOST}
+  NATS_PORT: ${NATS_PORT}
+
+x-redis-vars: &redis-env
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_HOST: ${REDIS_HOST}
+  REDIS_PORT: ${REDIS_PORT}
+  REDIS_DB: ${REDIS_DB:-0}
+
+x-smtp-vars: &smtp-env
+  SMTP_HOST: ${SMTP_HOST}
+  SMTP_PORT: ${SMTP_PORT:-465}
+  SMTP_USERNAME: ${SMTP_USERNAME}
+  SMTP_PASSWORD: ${SMTP_PASSWORD}
+  SMTP_FROM: ${SMTP_FROM}
+  SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Codurity}
+
+x-app-vars: &app-env
+  APP_ENV: ${APP_ENV:-local}
+  SERVER_PORT: ${SERVER_PORT:-8080}
+  CORS_ORIGINS: ${CORS_ORIGINS:-*}
+  CORS_METHODS: ${CORS_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
+  CORS_HEADERS: ${CORS_HEADERS:-Authorization,Content-Type}
+  CI_REPORT_CACHE_TTL: ${CI_REPORT_CACHE_TTL:-24h}
+  <<: [*postgres-env, *redis-env, *nats-env, *smtp-env]
+
+services:
+  # HTTP-сервер (hot-reload через air)
+  rest:
+    container_name: notifications_http
+    networks:
+      - traefik
+    build:
+      context: .
+      dockerfile: build/local/Dockerfile
+    environment:
+      <<: *app-env
+    volumes:
+      - ./:/app
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.notifications-service.rule=Host(`codurity.ai`) && PathPrefix(`/api/v1/notifications`)
+      - traefik.http.routers.notifications-service.entrypoints=web
+      - traefik.http.services.notifications-service.loadbalancer.server.port=${SERVER_PORT:-8080}
+    depends_on:
+      - database
+
+  # воркер, обрабатывающий события из NATS
+  worker:
+    container_name: notifications_worker
+    networks:
+      - traefik
+    build:
+      context: .
+      dockerfile: build/local-worker/Dockerfile
+    environment:
+      <<: *app-env
+    volumes:
+      - ./:/app
+    depends_on:
+      - database
+
+  # sql база данных PostgreSQL
+  database:
+    container_name: notifications_postgres
+    networks:
+      - traefik
+    image: postgres:17-alpine3.23
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+networks:
+  traefik:
+    external: true
+
+# том для хранения данных PostgreSQL
+volumes:
+  postgres_data:

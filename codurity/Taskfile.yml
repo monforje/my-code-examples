@@ -1,0 +1,51 @@
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  BINARY: codurity
+  LDFLAGS: >-
+    -X codurity/internal/build.Version={{.VERSION}}
+    -X codurity/internal/build.AuthAPIURL={{.AUTH_API_URL}}
+    -X codurity/internal/build.FrontendURL={{.FRONTEND_URL}}
+
+tasks:
+  default:
+    desc: Build the CLI (ldflags from .env)
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o {{.BINARY}} .
+
+  build:
+    desc: Build the CLI (ldflags from .env)
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o {{.BINARY}} .
+
+  run:
+    desc: Build and run with the given args (task run -- version)
+    cmds:
+      - go run -ldflags "{{.LDFLAGS}}" . {{.CLI_ARGS}}
+
+  install:
+    desc: go install with ldflags from .env
+    cmds:
+      - go install -ldflags "{{.LDFLAGS}}" .
+
+  tidy:
+    desc: go mod tidy
+    cmds:
+      - go mod tidy
+
+  vet:
+    desc: go vet ./...
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: go test ./...
+    cmds:
+      - go test ./...
+
+  clean:
+    desc: Remove built binary
+    cmds:
+      - rm -f {{.BINARY}}

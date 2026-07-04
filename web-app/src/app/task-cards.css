@@ -1,0 +1,256 @@
+/* ==========================================================================
+   TASK BOARD — Tetris tile layout shell
+   ========================================================================== */
+
+/* Board container */
+.tasks-board {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+  transition: height var(--cd-duration-slow) var(--cd-ease-out);
+}
+
+.tasks-board[aria-busy="true"] {
+  cursor: progress;
+}
+
+.tasks-board__tile {
+  position: absolute;
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(var(--cd-space-2));
+  transition:
+    left var(--cd-duration-slow) var(--cd-ease-out),
+    top var(--cd-duration-slow) var(--cd-ease-out),
+    width 55ms var(--cd-ease-out),
+    height 65ms var(--cd-ease-out),
+    opacity var(--cd-duration-fast) var(--cd-ease-out),
+    transform var(--cd-duration-base) var(--cd-ease-out);
+  will-change: opacity, transform;
+}
+
+.tasks-board__tile--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tasks-board__tile--settled {
+  will-change: auto;
+}
+
+.tasks-empty {
+  padding: var(--cd-space-8);
+  border: var(--cd-border-base) solid var(--cd-border-muted);
+  border-radius: var(--cd-radius-md);
+  color: var(--cd-text-muted);
+  background: var(--cd-surface-soft);
+  font-size: var(--cd-text-sm);
+}
+
+.task-card__lang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--cd-text-subtle);
+}
+
+/* ==========================================================================
+   TASK DETAIL — Landing Page styles from prototype
+   ========================================================================== */
+
+.task-page {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(23, 88, 209, 0.12), transparent 32rem),
+    radial-gradient(circle at 92% 4%, rgba(165, 193, 245, 0.28), transparent 26rem),
+    linear-gradient(180deg, var(--cd-surface-soft) 0%, var(--cd-bg) 44%);
+  overflow-x: hidden;
+  color: var(--cd-text);
+}
+
+.task-grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--task-grid-line, rgba(23, 88, 209, 0.08)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--task-grid-line, rgba(23, 88, 209, 0.08)) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), transparent 74%);
+}
+
+.task-chip-row,
+.task-tags,
+.task-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cd-space-2);
+}
+
+.task-hero {
+  padding-block: clamp(var(--cd-space-5), 5vw, var(--cd-space-10)) var(--cd-space-8);
+}
+
+.task-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: clamp(var(--cd-space-6), 5vw, var(--cd-space-12));
+  align-items: stretch;
+}
+
+.task-hero-copy {
+  display: grid;
+  align-content: center;
+  min-height: 360px;
+}
+
+.task-title {
+  max-width: 14ch;
+  margin-top: var(--cd-space-5);
+  font-family: var(--cd-font-heading);
+  font-size: clamp(2.5rem, 6vw, var(--cd-text-6xl));
+  font-weight: var(--cd-weight-extrabold);
+  letter-spacing: var(--cd-tracking-heading);
+  line-height: var(--cd-leading-tight);
+}
+
+.task-description {
+  max-width: 760px;
+  margin-top: var(--cd-space-5);
+  font-size: clamp(var(--cd-text-md), 1.6vw, var(--cd-text-xl));
+  color: var(--cd-text-muted);
+  line-height: var(--cd-leading-relaxed);
+}
+
+.task-tags {
+  margin-top: var(--cd-space-6);
+}
+.task-tag {
+  color: var(--cd-text);
+  background: var(--cd-surface);
+}
+
+.task-section-tight {
+  padding-block: var(--cd-space-8) var(--cd-space-12);
+}
+.task-section-heading {
+  max-width: none;
+}
+
+.task-generated-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cd-space-5);
+}
+
+.task-generated-card {
+  min-height: 210px;
+  display: grid;
+  align-content: start;
+  height: 100%;
+}
+
+.task-generated-card h3 {
+  font-size: var(--cd-text-2xl);
+}
+
+.task-generated-card p {
+  margin-top: var(--cd-space-3);
+}
+
+.task-content-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(var(--cd-space-6), 4vw, var(--cd-space-12));
+  align-items: start;
+}
+
+.task-spec-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.task-spec-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cd-space-4);
+  padding: var(--cd-space-5) var(--cd-space-6);
+  border-bottom: var(--cd-border-base) solid var(--cd-border);
+  background: var(--cd-surface-soft);
+}
+
+.task-spec-header h2 {
+  margin-top: var(--cd-space-2);
+  font-size: var(--cd-text-3xl);
+}
+
+.task-spec-body {
+  padding: clamp(var(--cd-space-5), 4vw, var(--cd-space-8));
+}
+
+.task-checklist-card h3 {
+  font-size: var(--cd-text-xl);
+}
+
+.task-checklist {
+  display: grid;
+  gap: var(--cd-space-3);
+  margin: var(--cd-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-checklist li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--cd-space-3);
+  align-items: start;
+  color: var(--cd-text-muted);
+}
+
+.task-checklist li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin-top: 0.45em;
+  border: var(--cd-border-base) solid var(--cd-primary);
+  border-radius: var(--cd-radius-full);
+  background: var(--cd-primary-soft);
+}
+
+.task-side {
+  position: sticky;
+  top: 72px;
+}
+
+/* Responsive: task detail */
+@media (max-width: 1080px) {
+  .task-hero-layout,
+  .task-content-layout {
+    grid-template-columns: 1fr;
+  }
+  .task-hero-copy {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 860px) {
+  .task-generated-grid {
+    grid-template-columns: 1fr;
+  }
+  .task-spec-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .task-title {
+    max-width: none;
+  }
+}

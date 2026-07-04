@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codurity</title>
+  <link rel="stylesheet" href="./styles/tokens.css" />
+  <link rel="stylesheet" href="./styles/themes.css" />
+  <link rel="stylesheet" href="./styles/globals.css" />
+  <link rel="stylesheet" href="./styles/components.css" />
+  <link rel="stylesheet" href="./styles/auth.css" />
+  <script src="./task-layout.js"></script>
+</head>
+<body>
+
+<div id="app"></div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ==========================================================================
+   STATE
+   ========================================================================== */
+const state = {
+  currentPage: 'login',
+  user: null,
+  theme: localStorage.getItem('cd-theme') || 'light',
+  // flash tokens (sessionStorage)
+  resetToken: null,
+  changeToken: null,
+  identityToken: null,
+  // flow data
+  registerEmail: '',
+  forgotEmail: '',
+  changePasswordStep: 1,
+  changeEmailStep: 1,
+  newEmail: '',
+  deleteStep: 1,
+  isSubmitting: false,
+  // tasks
+  currentTaskId: null,
+  taskFilters: {
+    type: 'all',
+    language: [],
+    level: 'all',
+    tags: [],
+    search: '',
+  },
+};
+
+/* ==========================================================================
+   MOCK TASKS
+   ========================================================================== */
+const MOCK_TASKS = [
+  {
+    id: 'task-1',
+    title: 'Implement Redis Caching Layer',
+    language: 'TypeScript',
+    type: 'Backend',
+    tags: ['redis', 'caching', 'high load'],
+    description: 'Реализовать распределённый кэш на Redis для снижения нагрузки на БД и ускорения ответов API.',
+    tz: `## Цель
+Реализовать распределённый кэширующий слой на Redis для снижения нагрузки на БД и ускорения API.
+
+## Задачи
+- Кэширование GET-эндпоинтов с конфигурируемым TTL
+- Инвалидация кэша при записях
+- Обработка недоступности Redis (graceful degradation)
+- Логирование cache hit/miss
+- Кэш-прогрев для частых запросов
+
+## Ограничения
+- Node.js / TypeScript
+- Redis 7+
+- Максимальный размер значения — 512 KB`,
+    complexity: 'Senior',
+    created_at: '2026-06-20T10:00:00Z',
+  },
+  {
+    id: 'task-2',
+    title: 'Design REST API for User Management',
+    language: 'TypeScript',
+    type: 'Backend',
+    tags: ['rest', 'api', 'openapi'],
+    description: 'Спроектировать и реализовать RESTful API для управления пользователями по OpenAPI 3.1.',
+    tz: `## Цель
+Спроектировать и реализовать RESTful API для управления пользователями по OpenAPI 3.1.
+
+## Задачи
+- CRUD-эндпоинты (\`GET\`, \`POST\`, \`PATCH\`, \`DELETE\`)
+- Пагинация (\`?page=1&limit=20\`)
+- Фильтрация по статусу и роли
+- Валидация входных данных через Zod
+- Корректные HTTP-коды ответов
+
+## Требования к спецификации
+- OpenAPI 3.1.0 YAML
+- Описание всех схем и ответов
+- Примеры запросов и ответов`,
+    complexity: 'Middle',
+    created_at: '2026-06-19T14:30:00Z',
+  },
+  {
+    id: 'task-3',
+    title: 'Build Task Board UI',
+    language: 'TypeScript',
+    type: 'Frontend',
+    tags: ['react', 'dnd', 'kanban'],
+    description: 'Реализовать Kanban-доску с drag-and-drop для управления задачами.',
+    tz: `## Цель
+Реализовать Kanban-доску с drag-and-drop для управления задачами.
+
+## Задачи
+- Drag-and-drop через \`@dnd-kit\`
+- Перетаскивание задач между колонками
+- Переупорядочивание задач внутри колонки
+- Адаптивная верстка (mobile + desktop)
+- Оптимистичные обновления UI
+- Доступность с клавиатуры
+
+## Стек
+- React 19 + TypeScript
+- \`@dnd-kit/core\` + \`@dnd-kit/sortable\`
+- CSS Modules`,
+    complexity: 'Senior',
+    created_at: '2026-06-18T09:15:00Z',
+  },
+  {
+    id: 'task-4',
+    title: 'Set Up CI/CD Pipeline',
+    language: 'YAML',
+    type: 'Backend',
+    tags: ['ci/cd', 'docker', 'devops'],
+    description: 'Настроить CI/CD через GitHub Actions для автоматической проверки и деплоя.',
+    tz: `## Цель
+Настроить CI/CD через GitHub Actions для автоматической проверки и деплоя.
+
+## Этапы
+1. **Lint** — oxlint, oxfmt --check
+2. **Test** — bun test
+3. **Build** — tsc + vite build
+4. **Docker** — сборка и пуш образа
+5. **Deploy** — деплой на staging/production
+
+## Требования
+- Кэширование зависимостей
+- Секреты в GitHub Secrets
+- Уведомления в Slack при ошибке`,
+    complexity: 'Junior',
+    created_at: '2026-06-17T11:00:00Z',
+  },
+  {
+    id: 'task-5',
+    title: 'Implement WebSocket Real-time Notifications',
+    language: 'TypeScript',
+    type: 'Frontend',
+    tags: ['websocket', 'real-time', 'notifications'],
+    description: 'Добавить push-уведомления в реальном времени через WebSocket.',
+    tz: `## Цель
+Добавить push-уведомления в реальном времени через WebSocket.
+
+## Задачи
+- WebSocket-сервер на Socket.io
+- Авторизация соединения через JWT
+- Обработка реконнекта с экспоненциальной задержкой
+- Оффлайн-очередь уведомлений
+- Бейдж непрочитанных
+- Настройки звука/вибрации`,
+    complexity: 'Middle',
+    created_at: '2026-06-16T16:45:00Z',
+  },
+  {
+    id: 'task-6',
+    title: 'Database Schema Migration System',
+    language: 'SQL',
+    type: 'Backend',
+    tags: ['database', 'migration', 'postgresql'],
+    description: 'Реализовать систему версионируемых миграций БД с поддержкой отката и seed-данных.',
+    tz: `## Цель
+Реализовать систему версионируемых миграций БД с поддержкой отката и seed-данных.
+
+## Задачи
+- Файлы миграций с версионным префиксом
+- \`up\` и \`down\` миграции
+- Seed-данные для dev/staging
+- Таблица \`schema_migrations\` для отслеживания
+- Интеграция в CI (автоматический запуск при деплое)
+
+## Ограничения
+- PostgreSQL 15+
+- Миграции без даунтайма`,
+    complexity: 'Senior',
+    created_at: '2026-06-15T08:20:00Z',
+  },
+];
+
+function setTheme(t) {
+  state.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('cd-theme', t);
+}
+
+setTheme(state.theme);
+
+/* ==========================================================================
+   HELPERS
+   ========================================================================== */
+function $(sel, root) { return (root || document).querySelector(sel); }
+function $$(sel, root) { return [...(root || document).querySelectorAll(sel)]; }
+
+function genId() {
+  return 'usr_' + Math.random().toString(36).slice(2, 10);
+}
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const icons = { success: '\u2713', error: '\u2717', info: '\u2139' };
+  const el = document.createElement('div');
+  el.className = 'toast toast--' + type;
+  el.innerHTML = '<span class="toast__icon">' + (icons[type] || '') + '</span><span class="toast__message">' + msg + '</span><button class="toast__close" onclick="this.parentElement.remove()">\u00d7</button>';
+  c.appendChild(el);
+  setTimeout(() => { el.style.animation = 'toast-out .26s ease forwards'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+function render(html) {
+  document.getElementById('app').innerHTML = html;
+}
+
+function navigate(page) {
+  state.currentPage = page;
+  route();
+}
+
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+function togglePassword(btn) {
+  const wrap = btn.closest('.password-field');
+  const inp = wrap.querySelector('input');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '\u25CF' : '\u25CB';
+}
+
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
+function logoH(size) {
+  return '<a onclick="navigate(state.user ? \'settings-profile\' : \'login\')" style="cursor:pointer;display:flex;align-items:center" class="app-header__logo"><img src="../src/shared/assets/logo.svg" alt="Codurity" class="app-header__logo-img" style="height:' + (size || 24) + 'px" /></a>';
+}
+
+function publicHeader() {
+  return '<header class="app-header"><div class="app-header__left">' + logoH(32) + '</div><div class="app-header__right"><button class="cd-button cd-button-ghost cd-button-sm" onclick="toggleThemeBtn()" style="padding:var(--cd-space-2)" title="' + (state.theme === 'dark' ? 'Светлая тема' : 'Тёмная тема') + '">' + themeIcon() + '</button><button class="cd-button cd-button-ghost cd-button-sm" onclick="navigate(\'login\')">Войти</button><button class="cd-button cd-button-primary cd-button-sm" onclick="navigate(\'register\')">Создать аккаунт</button></div></header>';
+}
+
+function publicFooter() {
+  return '<footer class="auth-footer"><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Support</a><span>© 2026 Codurity</span></footer>';
+}
+
+function themeIcon() {
+  return state.theme === 'dark' ? '\u263E' : '\u2600';
+}
+
+function toggleThemeBtn() {
+  setTheme(state.theme === 'light' ? 'dark' : 'light');
+}
+
+function appHeader() {
+  const email = state.user ? state.user.email : '';
+  const initials = email ? email[0].toUpperCase() : 'U';
+  const currentPage = state.page || 'tasks';
+  const navItems = [
+    { id: 'tasks', label: 'Задачи' },
+    { id: 'dashboard', label: 'Дашборд' },
+    { id: 'courses', label: 'Курсы' },
+    { id: 'community', label: 'Сообщество' }
+  ];
+  const navHtml = navItems.map(function(item) {
+    const active = currentPage === item.id ? ' app-header__nav-item--active' : '';
+    return '<button class="app-header__nav-item' + active + '" onclick="navigate(\'' + item.id + '\')">' + item.label + '</button>';
+  }).join('');
+
+  return '<header class="app-header">' +
+    '<div class="app-header__left">' +
+      '<button class="app-header__burger" onclick="toggleMobileNav()" aria-label="Меню"><span class="app-header__burger-line"></span></button>' +
+      logoH(32) +
+      '<div class="app-header__divider"></div>' +
+      '<nav class="app-header__nav">' + navHtml + '</nav>' +
+    '</div>' +
+    '<div class="app-header__right">' +
+      '<button class="app-header__search" onclick="openSearchModal()" title="Поиск (Ctrl+K)">' +
+        '<svg class="app-header__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+        '<span class="app-header__search-text">Поиск...</span>' +
+        '<span class="app-header__search-shortcut">⌘K</span>' +
+      '</button>' +
+      '<div class="app-header__notifications">' +
+        '<button class="app-header__notif-btn" onclick="toggleNotifDropdown()" title="Уведомления">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>' +
+          '<span class="app-header__notif-badge"></span>' +
+        '</button>' +
+        '<div class="notif-dropdown" id="notif-dropdown" style="display:none">' +
+          '<div class="notif-dropdown__header"><span class="notif-dropdown__title">Уведомления</span><button class="notif-dropdown__mark">Отметить все</button></div>' +
+          '<div class="notif-dropdown__list">' +
+            '<div class="notif-dropdown__item notif-dropdown__item--unread"><span class="notif-dropdown__avatar">A</span><div class="notif-dropdown__body"><div class="notif-dropdown__text"><strong>Алексей</strong> прокомментировал задачу <strong>REST API</strong></div><div class="notif-dropdown__time">5 мин назад</div></div></div>' +
+            '<div class="notif-dropdown__item notif-dropdown__item--unread"><span class="notif-dropdown__avatar">M</span><div class="notif-dropdown__body"><div class="notif-dropdown__text"><strong>Мария</strong> назначила вам задачу <strong>WebSocket</strong></div><div class="notif-dropdown__time">1ч назад</div></div></div>' +
+            '<div class="notif-dropdown__item"><span class="notif-dropdown__avatar">S</span><div class="notif-dropdown__body"><div class="notif-dropdown__text"><strong>Система</strong> задача <strong>Redis кэширование</strong> помечена как решённая</div><div class="notif-dropdown__time">3ч назад</div></div></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="app-header__user">' +
+        '<button class="app-header__user-btn" onclick="toggleUserMenu()"><span class="app-header__avatar">' + initials + '</span></button>' +
+        '<div class="user-dropdown" id="user-dropdown" style="display:none">' +
+          '<div class="user-dropdown__header"><span class="app-header__avatar app-header__avatar--dropdown">' + initials + '</span><div class="user-dropdown__email">' + email + '</div></div>' +
+          '<div class="user-dropdown__items">' +
+            '<button class="user-dropdown__item" onclick="navigate(\'settings-profile\')">Профиль</button>' +
+            '<button class="user-dropdown__item" onclick="navigate(\'settings-security\')">Настройки</button>' +
+            '<div class="user-dropdown__divider"></div>' +
+            '<button class="user-dropdown__item" onclick="toggleThemeBtn()">' + themeIcon() + ' ' + (state.theme === 'dark' ? 'Светлая тема' : 'Тёмная тема') + '</button>' +
+            '<div class="user-dropdown__divider"></div>' +
+            '<button class="user-dropdown__item user-dropdown__item--danger" onclick="doLogout()">Выйти</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</header>' +
+  '<div id="mobile-nav-container"></div>';
+}
+
+function toggleUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleNotifDropdown() {
+  const dd = document.getElementById('notif-dropdown');
+  const wasHidden = dd.style.display === 'none';
+  dd.style.display = wasHidden ? 'block' : 'none';
+  document.getElementById('user-dropdown').style.display = 'none';
+}
+
+function toggleMobileNav() {
+  const container = document.getElementById('mobile-nav-container');
+  if (container.children.length > 0) {
+    container.innerHTML = '';
+    return;
+  }
+  const currentPage = state.page || 'tasks';
+  const navItems = [
+    { id: 'tasks', label: 'Задачи' },
+    { id: 'dashboard', label: 'Дашборд' },
+    { id: 'courses', label: 'Курсы' },
+    { id: 'community', label: 'Сообщество' }
+  ];
+  const itemsHtml = navItems.map(function(item) {
+    const active = currentPage === item.id ? ' mobile-nav__item--active' : '';
+    return '<button class="mobile-nav__item' + active + '" onclick="navigate(\'' + item.id + '\'); document.getElementById(\'mobile-nav-container\').innerHTML = \'\'">' + item.label + '</button>';
+  }).join('');
+  container.innerHTML = '<div class="mobile-nav-overlay" onclick="document.getElementById(\'mobile-nav-container\').innerHTML = \'\'"></div><div class="mobile-nav">' + itemsHtml + '</div>';
+}
+
+function showAvatarModal(initials) {
+  const existing = document.querySelector('.modal-overlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = '<div class="modal" style="max-width:320px;text-align:center"><div class="modal__header"><h2 class="modal__title">Аватар</h2><button class="modal__close" onclick="this.closest(\'.modal-overlay\').remove()">\u00d7</button></div><div class="modal__body" style="display:flex;justify-content:center;padding:var(--cd-space-8) 0"><span class="app-header__avatar" style="width:120px;height:120px;font-size:3rem;border-radius:50%">' + initials + '</span></div></div>';
+  document.body.appendChild(overlay);
+}
+
+function openSearchModal() {
+  const existing = document.querySelector('.search-modal-overlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'search-modal-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+  var searchState = { query: '', focusedIdx: 0 };
+
+  var allItems = [
+    { group: 'Разделы', icon: '📋', label: 'Задачи', hint: 'Раздел', action: 'navigate("tasks")' },
+    { group: 'Разделы', icon: '📊', label: 'Дашборд', hint: 'Раздел', action: 'navigate("dashboard")' },
+    { group: 'Разделы', icon: '📚', label: 'Курсы', hint: 'Раздел', action: 'navigate("courses")' },
+    { group: 'Разделы', icon: '💬', label: 'Сообщество', hint: 'Раздел', action: 'navigate("community")' },
+    { group: 'Настройки', icon: '⚙', label: 'Профиль', hint: 'Страница', action: 'navigate("settings-profile")' },
+    { group: 'Настройки', icon: '🔒', label: 'Безопасность', hint: 'Страница', action: 'navigate("settings-security")' }
+  ];
+
+  function getFiltered() {
+    if (!searchState.query) return allItems;
+    var q = searchState.query.toLowerCase();
+    return allItems.filter(function(item) {
+      return item.label.toLowerCase().indexOf(q) !== -1 || item.group.toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function renderResults() {
+    var results = getFiltered();
+    var resultsEl = overlay.querySelector('.search-modal__results');
+    if (results.length === 0) {
+      resultsEl.innerHTML = '<div class="search-modal__empty">' +
+        '<div class="search-modal__empty-icon">🔍</div>' +
+        '<div class="search-modal__empty-text">Ничего не найдено</div>' +
+        '<div class="search-modal__empty-hint">Попробуйте другой запрос</div>' +
+      '</div>';
+      return;
+    }
+    searchState.focusedIdx = Math.min(searchState.focusedIdx, results.length - 1);
+    var groups = {};
+    var groupOrder = [];
+    results.forEach(function(item) {
+      if (!groups[item.group]) {
+        groups[item.group] = [];
+        groupOrder.push(item.group);
+      }
+      groups[item.group].push(item);
+    });
+    var html = '';
+    groupOrder.forEach(function(group) {
+      html += '<div class="search-modal__group">';
+      html += '<div class="search-modal__group-title">' + group + '</div>';
+      groups[group].forEach(function(item) {
+        var globalIdx = results.indexOf(item);
+        var focused = globalIdx === searchState.focusedIdx ? ' search-modal__item--focused' : '';
+        html += '<div class="search-modal__item' + focused + '" data-idx="' + globalIdx + '" onclick="' + item.action + '; overlay.remove()">' +
+          '<div class="search-modal__item-icon">' + item.icon + '</div>' +
+          '<div class="search-modal__item-label">' + item.label + '</div>' +
+          '<div class="search-modal__item-hint">' + item.hint + '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+    });
+    resultsEl.innerHTML = html;
+  }
+
+  overlay.innerHTML = '<div class="search-modal">' +
+    '<div class="search-modal__input-wrap">' +
+      '<svg class="search-modal__input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>' +
+      '<input class="search-modal__input" id="search-modal-input" type="text" placeholder="Поиск задач, страниц, настроек..." />' +
+      '<button class="search-modal__input-clear" onclick="document.getElementById(\'search-modal-input\').value=\'\'; searchState.query=\'\'; searchState.focusedIdx=0; renderResults();" title="Очистить">\u00d7</button>' +
+      '<span class="search-modal__input-shortcut">ESC</span>' +
+    '</div>' +
+    '<div class="search-modal__results"></div>' +
+    '<div class="search-modal__footer">' +
+      '<span><kbd>\u2191</kbd><kbd>\u2193</kbd> навигация</span>' +
+      '<span><kbd>\u21B5</kbd> выбрать</span>' +
+      '<span><kbd>esc</kbd> закрыть</span>' +
+    '</div>' +
+  '</div>';
+
+  document.body.appendChild(overlay);
+  var input = document.getElementById('search-modal-input');
+  input.focus();
+
+  input.addEventListener('input', function() {
+    searchState.query = input.value;
+    searchState.focusedIdx = 0;
+    renderResults();
+  });
+
+  input.addEventListener('keydown', function(e) {
+    var results = getFiltered();
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      searchState.focusedIdx = Math.min(searchState.focusedIdx + 1, results.length - 1);
+      renderResults();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      searchState.focusedIdx = Math.max(searchState.focusedIdx - 1, 0);
+      renderResults();
+    } else if (e.key === 'Enter' && results[searchState.focusedIdx]) {
+      e.preventDefault();
+      var item = results[searchState.focusedIdx];
+      overlay.remove();
+      eval(item.action);
+    }
+  });
+
+  renderResults();
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    openSearchModal();
+  }
+  if (e.key === 'Escape') {
+    const searchOverlay = document.querySelector('.search-modal-overlay');
+    if (searchOverlay) searchOverlay.remove();
+    document.getElementById('user-dropdown').style.display = 'none';
+    document.getElementById('notif-dropdown').style.display = 'none';
+    document.getElementById('mobile-nav-container').innerHTML = '';
+  }
+});
+
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('user-dropdown');
+  const btn = document.querySelector('.app-header__user-btn');
+  if (dd && !dd.contains(e.target) && btn && !btn.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+  const notifDd = document.getElementById('notif-dropdown');
+  const notifBtn = document.querySelector('.app-header__notif-btn');
+  if (notifDd && !notifDd.contains(e.target) && notifBtn && !notifBtn.contains(e.target)) {
+    notifDd.style.display = 'none';
+  }
+});
+
+function settingsSidebar(active) {
+  const items = [];
+  if (active === 'settings-profile') {
+    items.push({ id: 'settings-profile', label: 'Профиль' });
+  } else if (active === 'settings-security') {
+    items.push({ id: 'settings-security', label: 'Безопасность' });
+  }
+  return '<aside class="settings-sidebar"><nav class="settings-sidebar__nav">' +
+    items.map(i => '<button class="settings-sidebar__item' + (active === i.id ? ' settings-sidebar__item--active' : '') + '" onclick="navigate(\'' + i.id + '\')">' + i.label + '</button>').join('') +
+    '</nav></aside>';
+}
+
+/* ==========================================================================
+   AUTH PAGES
+   ========================================================================== */
+
+function pageLogin() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card">' +
+    '<div class="auth-card__header"><h1 class="auth-card__title auth-card__title--lg">Вход</h1><p class="auth-card__desc">Используйте рабочий email, чтобы продолжить работу с платформой.</p></div>' +
+    '<div id="login-error"></div>' +
+    '<form class="auth-form" onsubmit="return doLogin(event)">' +
+    '<div class="cd-field"><label class="cd-label" for="login-email">Email</label><input class="cd-input" id="login-email" type="email" placeholder="name@company.com" required autocomplete="email" /></div>' +
+    '<div class="cd-field"><label class="cd-label" for="login-pass">Пароль</label><div class="password-field"><input class="cd-input" id="login-pass" type="password" placeholder="Введите пароль" required autocomplete="current-password" style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)" aria-label="Показать пароль">\u25CB</button></div></div>' +
+    '<div class="auth-form__links"><span></span><a onclick="navigate(\'forgot\')" style="font-size:var(--cd-text-sm);color:var(--cd-primary);cursor:pointer;font-weight:var(--cd-weight-medium)">Забыли пароль?</a></div>' +
+    '<div class="auth-form__actions"><button class="cd-button cd-button-primary cd-button-lg" type="submit" id="login-btn">Войти</button></div>' +
+    '</form></div></div>' + publicFooter();
+}
+
+function pageRegister() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card">' +
+    '<div class="auth-card__header"><h1 class="auth-card__title auth-card__title--lg">Регистрация</h1><p class="auth-card__desc">Зарегистрируйтесь, чтобы получить доступ к Codurity.</p></div>' +
+    '<div id="register-error"></div>' +
+    '<form class="auth-form" onsubmit="return doRegister(event)">' +
+    '<div class="cd-field"><label class="cd-label" for="reg-email">Email</label><input class="cd-input" id="reg-email" type="email" placeholder="name@company.com" required autocomplete="email" /></div>' +
+    '<div class="cd-field"><label class="cd-label" for="reg-pass">Пароль</label><div class="password-field"><input class="cd-input" id="reg-pass" type="password" placeholder="Введите пароль" required autocomplete="new-password" style="padding-right:48px" oninput="checkPasswordReqs(this.value)" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)" aria-label="Показать пароль">\u25CB</button></div><div class="password-requirements" id="password-reqs"><div class="password-requirements__item" id="req-len"><span class="password-requirements__icon">\u25CB</span>Минимум 8 символов</div><div class="password-requirements__item" id="req-upper"><span class="password-requirements__icon">\u25CB</span>Заглавная буква</div><div class="password-requirements__item" id="req-num"><span class="password-requirements__icon">\u25CB</span>Цифра</div></div></div>' +
+    '<div class="cd-field"><label class="cd-label" for="reg-pass2">Повторите пароль</label><div class="password-field"><input class="cd-input" id="reg-pass2" type="password" placeholder="Введите пароль" required autocomplete="new-password" style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)" aria-label="Показать пароль">\u25CB</button></div></div>' +
+    '<div class="auth-form__actions"><button class="cd-button cd-button-primary cd-button-lg" type="submit" id="reg-btn">Создать аккаунт</button></div>' +
+    '</form></div></div>' + publicFooter();
+}
+
+function pageVerify() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card">' +
+    '<div class="auth-card__header"><h1 class="auth-card__title">Подтвердите email</h1><p class="auth-card__desc">Мы отправили код на ' + state.registerEmail + '. Введите его ниже.</p></div>' +
+    '<div id="verify-error"></div>' +
+    '<form class="auth-form" onsubmit="return doVerify(event)">' +
+    '<div class="code-input" id="code-input">' +
+    [0,1,2,3,4,5].map(i => '<input class="code-input__cell" type="text" inputmode="numeric" maxlength="1" aria-label="Цифра ' + (i+1) + '" data-idx="' + i + '" />').join('') +
+    '</div>' +
+    '<div class="auth-form__actions"><button class="cd-button cd-button-primary cd-button-lg" type="submit" id="verify-btn">Подтвердить</button></div>' +
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:var(--cd-space-2)"><button type="button" class="resend-btn" id="resend-verify" onclick="doResendCode(\'verify\')">Отправить код ещё раз</button><a onclick="navigate(\'register\')" style="font-size:var(--cd-text-sm);color:var(--cd-primary);cursor:pointer;font-weight:var(--cd-weight-medium)">Изменить email</a></div>' +
+    '</form></div></div>' + publicFooter();
+}
+
+function pageForgot() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card">' +
+    '<div class="auth-card__header"><h1 class="auth-card__title">Восстановить пароль</h1><p class="auth-card__desc">Введите email, и мы отправим код для сброса пароля.</p></div>' +
+    '<div id="forgot-error"></div>' +
+    '<form class="auth-form" onsubmit="return doForgot(event)">' +
+    '<div class="cd-field"><label class="cd-label" for="forgot-email">Email</label><input class="cd-input" id="forgot-email" type="email" placeholder="name@company.com" required autocomplete="email" /></div>' +
+    '<div class="auth-form__actions"><button class="cd-button cd-button-primary cd-button-lg" type="submit" id="forgot-btn">Отправить код</button></div>' +
+    '<div class="auth-form__footer"><a onclick="navigate(\'login\')" style="cursor:pointer">Вернуться ко входу</a></div>' +
+    '</form></div></div>' + publicFooter();
+}
+
+function pageForgotVerify() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card">' +
+    '<div class="auth-card__header"><h1 class="auth-card__title">Введите код восстановления</h1><p class="auth-card__desc">Код отправлен на ' + state.forgotEmail + '. Введите его ниже.</p></div>' +
+    '<div id="forgot-verify-error"></div>' +
+    '<form class="auth-form" onsubmit="return doForgotVerify(event)">' +
+    '<div class="code-input" id="code-input">' +
+    [0,1,2,3,4,5].map(i => '<input class="code-input__cell" type="text" inputmode="numeric" maxlength="1" aria-label="Цифра ' + (i+1) + '" data-idx="' + i + '" />').join('') +
+    '</div>' +
+    '<div class="auth-form__actions"><button class="cd-button cd-button-primary cd-button-lg" type="submit" id="forgot-verify-btn">Продолжить</button></div>' +
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:var(--cd-space-2)"><button type="button" class="resend-btn" id="resend-forgot" onclick="doResendCode(\'forgot\')">Отправить код ещё раз</button><a onclick="navigate(\'forgot\')" style="font-size:var(--cd-text-sm);color:var(--cd-primary);cursor:pointer;font-weight:var(--cd-weight-medium)">Изменить email</a></div>' +
+    '</form></div></div>' + publicFooter();
+}
+
+function pageReset() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card">' +
+    '<div class="auth-card__header"><h1 class="auth-card__title">Создайте новый пароль</h1></div>' +
+    '<div id="reset-error"></div>' +
+    '<form class="auth-form" onsubmit="return doReset(event)">' +
+    '<div class="cd-field"><label class="cd-label" for="reset-pass">Новый пароль</label><div class="password-field"><input class="cd-input" id="reset-pass" type="password" placeholder="Введите пароль" required autocomplete="new-password" style="padding-right:48px" oninput="checkPasswordReqsReset(this.value)" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)" aria-label="Показать пароль">\u25CB</button></div><div class="password-requirements" id="password-reqs-reset"><div class="password-requirements__item" id="req-len-r"><span class="password-requirements__icon">\u25CB</span>Минимум 8 символов</div><div class="password-requirements__item" id="req-upper-r"><span class="password-requirements__icon">\u25CB</span>Заглавная буква</div><div class="password-requirements__item" id="req-num-r"><span class="password-requirements__icon">\u25CB</span>Цифра</div></div></div>' +
+    '<div class="cd-field"><label class="cd-label" for="reset-pass2">Повторите пароль</label><div class="password-field"><input class="cd-input" id="reset-pass2" type="password" placeholder="Введите пароль" required autocomplete="new-password" style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)" aria-label="Показать пароль">\u25CB</button></div></div>' +
+    '<div class="auth-form__actions"><button class="cd-button cd-button-primary cd-button-lg" type="submit" id="reset-btn">Сохранить пароль</button></div>' +
+    '</form></div></div>' + publicFooter();
+}
+
+function pageAccountDeleted() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-card"><div class="auth-success"><div class="auth-success__icon">\u2713</div><h2 class="auth-success__title">Аккаунт удалён</h2><p class="auth-success__text">Ваш аккаунт был удалён.</p><button class="cd-button cd-button-primary" onclick="navigate(\'login\')">На главную</button></div></div></div>' + publicFooter();
+}
+
+function pageSessionExpired() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-centered"><div class="auth-centered__icon auth-centered__icon--warning">\u26A0</div><h1 class="auth-centered__title">Сессия истекла</h1><p class="auth-centered__text">Войдите снова, чтобы продолжить.</p><button class="cd-button cd-button-primary" onclick="navigate(\'login\')">Войти</button></div></div>' + publicFooter();
+}
+
+function pageBlocked() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-centered"><div class="auth-centered__icon auth-centered__icon--danger">\u2716</div><h1 class="auth-centered__title">Аккаунт заблокирован</h1><p class="auth-centered__text">Доступ к аккаунту ограничен. Обратитесь в поддержку.</p><a class="cd-button cd-button-primary" href="#">Связаться с поддержкой</a></div></div>' + publicFooter();
+}
+
+function pageGenericError() {
+  return publicHeader() + '<div class="auth-page__main"><div class="auth-centered"><div class="auth-centered__icon auth-centered__icon--info">!</div><h1 class="auth-centered__title">Что-то пошло не так</h1><p class="auth-centered__text">Попробуйте обновить страницу или повторить действие позже.</p><button class="cd-button cd-button-primary" onclick="route()">Повторить</button></div></div>' + publicFooter();
+}
+
+/* ==========================================================================
+   AUTHENTICATED PAGES
+   ========================================================================== */
+
+function pageSettingsProfile() {
+  if (!state.user) { navigate('login'); return ''; }
+  const u = state.user;
+  const statusBadge = u.status === 'active' ? 'cd-badge-success' : u.status === 'blocked' ? 'cd-badge-danger' : 'cd-badge-warning';
+  const emailBadge = u.email_verified ? 'cd-badge-success' : 'cd-badge-warning';
+  const initials = u.email[0].toUpperCase();
+  return appHeader() + '<div class="settings-layout">' + settingsSidebar('settings-profile') +
+    '<div class="settings-content"><div class="settings-content__header"><h1 class="settings-content__title">Профиль</h1><p class="settings-content__desc">Основные данные вашего аккаунта Codurity.</p></div>' +
+    '<div class="cd-stack-lg">' +
+    '<div class="account-card"><div class="account-card__header">Данные аккаунта</div>' +
+    '<div class="account-card__row account-card__row--avatar"><span class="account-card__label">Аватар</span><span class="account-card__value"><span class="app-header__avatar app-header__avatar--large" onclick="showAvatarModal(\'' + initials + '\')" style="cursor:pointer">' + initials + '</span></span></div>' +
+    '<div class="account-card__row"><span class="account-card__label">Email</span><span class="account-card__value">' + u.email + '</span></div>' +
+    '<div class="account-card__row"><span class="account-card__label">Email verified</span><span class="account-card__value"><span class="cd-badge ' + emailBadge + '">' + (u.email_verified ? 'Подтверждён' : 'Не подтверждён') + '</span></span></div>' +
+    '<div class="account-card__row"><span class="account-card__label">Статус</span><span class="account-card__value"><span class="cd-badge ' + statusBadge + '">' + u.status + '</span></span></div>' +
+    '<div class="account-card__row"><span class="account-card__label">Дата создания</span><span class="account-card__value">' + formatDate(u.created_at) + '</span></div>' +
+    '</div></div></div></div>';
+}
+
+function pageSettingsSecurity() {
+  if (!state.user) { navigate('login'); return ''; }
+  return appHeader() + '<div class="settings-layout">' + settingsSidebar('settings-security') +
+    '<div class="settings-content"><div class="settings-content__header"><h1 class="settings-content__title">Безопасность</h1><p class="settings-content__desc">Управление паролем, email и сессиями.</p></div>' +
+    '<div class="cd-stack">' +
+    '<div class="security-card"><div class="security-card__info"><div class="security-card__title">Пароль</div><div class="security-card__desc">Обновите пароль для защиты аккаунта.</div></div><button class="cd-button cd-button-soft" onclick="startChangePassword()">Сменить пароль</button></div>' +
+    '<div class="security-card"><div class="security-card__info"><div class="security-card__title">Email</div><div class="security-card__desc">Email используется для входа и security-кодов.</div></div><button class="cd-button cd-button-soft" onclick="startChangeEmail()">Сменить email</button></div>' +
+    '<div class="security-card"><div class="security-card__info"><div class="security-card__title">Сессия</div><div class="security-card__desc">Завершите текущую сессию на этом устройстве.</div></div><button class="cd-button" onclick="doLogout()">Выйти</button></div>' +
+    '<div class="danger-zone"><div class="danger-zone__title">Удаление аккаунта</div><div class="danger-zone__desc">Удаление аккаунта необратимо.</div><button class="cd-button cd-button-danger" onclick="startDeleteAccount()">Удалить аккаунт</button></div>' +
+    '</div></div></div>';
+}
+
+/* ==========================================================================
+   TASKS PAGES
+   ========================================================================== */
+
+const TASKS_API_LIMIT = 20;
+let taskLayoutRunId = 0;
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, function(ch) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
+  });
+}
+
+function jsArg(value) {
+  return "'" + String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+}
+
+function getTaskFilters() {
+  if (!state.taskFilters) {
+    state.taskFilters = { type: 'all', language: [], level: 'all', tags: [], search: '' };
+  }
+  if (!Array.isArray(state.taskFilters.language)) state.taskFilters.language = [];
+  return state.taskFilters;
+}
+
+function getUniqueTaskValues(getter) {
+  const values = [];
+  MOCK_TASKS.forEach(task => {
+    const value = getter(task);
+    if (Array.isArray(value)) {
+      value.forEach(item => { if (!values.includes(item)) values.push(item); });
+    } else if (value && !values.includes(value)) {
+      values.push(value);
+    }
+  });
+  return values.sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function setTaskFilter(name, value) {
+  getTaskFilters()[name] = value;
+  applyTaskFilters();
+}
+
+function handleTaskSearch(value) {
+  getTaskFilters().search = value;
+  renderTaskTiles();
+}
+
+function toggleTaskTag(tag) {
+  const filters = getTaskFilters();
+  const tags = filters.tags || [];
+  filters.tags = tags.includes(tag) ? tags.filter(item => item !== tag) : tags.concat(tag);
+  applyTaskFilters();
+}
+
+function toggleTaskLanguage(lang) {
+  const filters = getTaskFilters();
+  const langs = filters.language || [];
+  filters.language = langs.includes(lang) ? langs.filter(item => item !== lang) : langs.concat(lang);
+  applyTaskFilters();
+}
+
+function clearTaskFilters() {
+  state.taskFilters = { type: 'all', language: [], level: 'all', tags: [], search: '' };
+  applyTaskFilters(true);
+}
+
+function hasActiveTaskFilters() {
+  const filters = getTaskFilters();
+  return filters.type !== 'all' || (filters.language && filters.language.length > 0) || filters.level !== 'all' || (filters.tags && filters.tags.length > 0) || (filters.search && filters.search.length > 0);
+}
+
+function getFilteredTasks() {
+  const filters = getTaskFilters();
+  return MOCK_TASKS.filter(task => {
+    if (filters.type !== 'all' && task.type !== filters.type) return false;
+    if (filters.language && filters.language.length > 0 && !filters.language.includes(task.language)) return false;
+    if (filters.level !== 'all' && task.complexity !== filters.level) return false;
+    if (filters.tags && filters.tags.length && !filters.tags.every(tag => task.tags.includes(tag))) return false;
+    if (filters.search && filters.search.length > 0) {
+      const q = filters.search.toLowerCase();
+      const haystack = (task.title + ' ' + task.description + ' ' + task.language + ' ' + task.tags.join(' ')).toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function applyTaskFilters(closeDetails) {
+  if (state.currentPage !== 'tasks' || !document.querySelector('.tasks-sidebar')) {
+    route();
+    return;
+  }
+
+  updateTaskFilterControls(closeDetails);
+  renderTaskTiles();
+}
+
+function recalcSegmentedControls() {
+  $$('.tasks-segmented').forEach(control => {
+    const buttons = $$('[data-segmented-button]', control);
+    const indicator = $('.tasks-segmented__indicator', control);
+    const active = $('.tasks-segmented__item--active', control);
+    if (!buttons.length || !indicator || !active) return;
+
+    const wrapped = buttons[buttons.length - 1].offsetTop !== buttons[0].offsetTop;
+    control.classList.toggle('tasks-segmented--wrapped', wrapped);
+    if (wrapped) return;
+
+    indicator.style.left = active.offsetLeft + 'px';
+    indicator.style.width = active.offsetWidth + 'px';
+  });
+}
+
+function updateTaskFilterControls(closeDetails) {
+  const filters = getTaskFilters();
+
+  $$('[data-task-filter]').forEach(btn => {
+    const name = btn.dataset.taskFilter;
+    const active = filters[name] === btn.dataset.filterValue;
+    btn.classList.toggle('tasks-segmented__item--active', active && name === 'type');
+    btn.classList.toggle('tasks-level-option--active', active && name === 'level');
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+
+  $$('[data-task-language]').forEach(btn => {
+    const lang = btn.dataset.taskLanguage;
+    const active = (filters.language || []).includes(lang);
+    btn.classList.toggle('tasks-filter-row--active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+
+  $$('[data-task-tag]').forEach(btn => {
+    const active = (filters.tags || []).includes(btn.dataset.taskTag);
+    btn.classList.toggle('tasks-tag-filter--active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+
+  const languageSummary = $('[data-filter-summary="language"]');
+  if (languageSummary) {
+    const langs = filters.language || [];
+    languageSummary.textContent = langs.length ? langs.length + ' выбрано' : 'Любой';
+  }
+
+  const levelDropdownValue = document.querySelector('[data-dropdown-trigger="level"] .tasks-dropdown__value');
+  if (levelDropdownValue) {
+    levelDropdownValue.textContent = filters.level === 'all' ? 'Уровень' : filters.level;
+  }
+  const levelTrigger = document.querySelector('[data-dropdown-trigger="level"]');
+  if (levelTrigger) {
+    levelTrigger.classList.toggle('tasks-dropdown__trigger--active', filters.level !== 'all');
+  }
+  $$('[data-dropdown-menu="level"] [data-task-filter="level"]').forEach(btn => {
+    const active = filters.level === btn.dataset.filterValue;
+    btn.classList.toggle('tasks-dropdown__item--active', active);
+  });
+
+  const searchInput = $('[data-task-search]');
+  if (searchInput && document.activeElement !== searchInput) {
+    searchInput.value = filters.search || '';
+  }
+  const searchClear = $('[data-search-clear]');
+  if (searchClear) searchClear.classList.toggle('tasks-search__clear--visible', !!(filters.search && filters.search.length > 0));
+  const searchPlaceholder = $('[data-search-placeholder]');
+  if (searchPlaceholder) searchPlaceholder.textContent = (filters.search && filters.search.length > 0) ? '' : '';
+
+  const tagsSummary = $('[data-filter-summary="tags"]');
+  if (tagsSummary) tagsSummary.textContent = filters.tags && filters.tags.length ? filters.tags.length + ' выбрано' : 'Выбрать';
+
+  const clearBtn = $('.tasks-filters__clear');
+  if (clearBtn) clearBtn.hidden = !hasActiveTaskFilters();
+
+  if (closeDetails) {
+    $$('.tasks-filter-card[open]').forEach(details => { details.open = false; });
+    closeAllDropdowns();
+  }
+
+  recalcSegmentedControls();
+}
+
+function listTasksFromApi(limit) {
+  return Promise.resolve(getFilteredTasks().slice(0, limit));
+}
+
+function inlineMarkdown(text) {
+  return escapeHtml(text)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+}
+
+function renderMarkdown(markdown) {
+  if (!markdown) {
+    return '<div class="task-tz-empty"><h3>ТЗ пока не добавлено</h3><p>Полное условие появится здесь, когда будет передано.</p></div>';
+  }
+
+  var lines = markdown.replace(/\r\n/g, '\n').split('\n');
+  var html = [];
+  var inCode = false;
+  var codeLang = '';
+  var codeLines = [];
+  var listType = null;
+  var paragraph = [];
+
+  function flushParagraph() {
+    if (paragraph.length) {
+      html.push('<p>' + inlineMarkdown(paragraph.join(' ').replace(/  +/g, ' ')) + '</p>');
+      paragraph = [];
+    }
+  }
+
+  function closeList() {
+    if (listType) { html.push('</' + listType + '>'); listType = null; }
+  }
+
+  function openList(type) {
+    if (listType !== type) { closeList(); html.push('<' + type + '>'); listType = type; }
+  }
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var fence = line.match(/^```\s*([\w-]+)?\s*$/);
+    if (fence) {
+      flushParagraph(); closeList();
+      if (!inCode) {
+        inCode = true; codeLang = fence[1] || ''; codeLines = [];
+      } else {
+        var langAttr = codeLang ? ' data-lang="' + escapeHtml(codeLang) + '"' : '';
+        html.push('<pre' + langAttr + '><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+        inCode = false; codeLang = ''; codeLines = [];
+      }
+      continue;
+    }
+    if (inCode) { codeLines.push(line); continue; }
+    if (!line.trim()) { flushParagraph(); closeList(); continue; }
+
+    var heading = line.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      flushParagraph(); closeList();
+      var level = heading[1].length;
+      html.push('<h' + level + '>' + inlineMarkdown(heading[2]) + '</h' + level + '>');
+      continue;
+    }
+    if (/^---+$/.test(line.trim())) { flushParagraph(); closeList(); html.push('<hr />'); continue; }
+
+    var unordered = line.match(/^[-*]\s+(.+)$/);
+    if (unordered) { flushParagraph(); openList('ul'); html.push('<li>' + inlineMarkdown(unordered[1]) + '</li>'); continue; }
+
+    var ordered = line.match(/^\d+\.\s+(.+)$/);
+    if (ordered) { flushParagraph(); openList('ol'); html.push('<li>' + inlineMarkdown(ordered[1]) + '</li>'); continue; }
+
+    var quote = line.match(/^>\s?(.+)$/);
+    if (quote) { flushParagraph(); closeList(); html.push('<blockquote>' + inlineMarkdown(quote[1]) + '</blockquote>'); continue; }
+
+    paragraph.push(line.trim());
+  }
+
+  if (inCode) html.push('<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+  flushParagraph(); closeList();
+  return html.join('\n');
+}
+
+function pageTasksList() {
+  if (!state.user) { navigate('login'); return ''; }
+  const filters = getTaskFilters();
+  const types = getUniqueTaskValues(task => task.type);
+  const languages = getUniqueTaskValues(task => task.language);
+  const levels = ['Junior', 'Middle', 'Senior'];
+  const tags = getUniqueTaskValues(task => task.tags);
+
+  return appHeader() +
+    '<div class="page-layout page-layout--tasks">' +
+      '<div class="tasks-layout">' +
+        renderTaskFilters(filters, languages, tags) +
+        '<main class="tasks-main">' +
+          renderTaskToolbar(filters, types, levels) +
+          '<div class="tasks-board" id="tasks-board" aria-live="polite"></div>' +
+        '</main>' +
+      '</div>' +
+    '</div>';
+}
+
+function getFilterSummary(value, fallback) {
+  return value === 'all' ? fallback : value;
+}
+
+function renderTaskToolbar(filters, types, levels) {
+  return '<div class="tasks-toolbar">' +
+    renderTaskToolbarType(types, filters.type) +
+    renderTaskToolbarSearchLevel(filters, levels) +
+  '</div>';
+}
+
+function renderTaskToolbarType(types, activeType) {
+  const values = ['all'].concat(types);
+  const activeIndex = Math.max(0, values.indexOf(activeType));
+  const labels = { all: 'Все' };
+
+  return '<div class="tasks-segmented" role="tablist" style="--segments:' + values.length + ';--active:' + activeIndex + '">' +
+    '<span class="tasks-segmented__indicator" aria-hidden="true"></span>' +
+    values.map(function(value) {
+      return '<button type="button" role="tab" data-segmented-button data-task-filter="type" data-filter-value="' + escapeHtml(value) + '" aria-selected="' + (activeType === value ? 'true' : 'false') + '" class="tasks-segmented__item' + (activeType === value ? ' tasks-segmented__item--active' : '') + '" onclick="setTaskFilter(\'type\', ' + jsArg(value) + ')">' +
+        escapeHtml(labels[value] || value) +
+      '</button>';
+    }).join('') +
+  '</div>';
+}
+
+function renderTaskToolbarSearchLevel(filters, levels) {
+  return '<div class="tasks-toolbar__row">' +
+    '<div class="tasks-search" data-search-root>' +
+      '<span class="tasks-search__icon">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+      '</span>' +
+      '<input type="text" class="tasks-search__input" placeholder="" data-task-search oninput="handleTaskSearch(this.value)" />' +
+      '<span class="tasks-search__placeholder" data-search-placeholder></span>' +
+      '<button type="button" class="tasks-search__clear' + (filters.search ? ' tasks-search__clear--visible' : '') + '" data-search-clear onclick="handleTaskSearch(\'\'); this.closest(\'[data-search-root]\').querySelector(\'input\').focus()">\u00d7</button>' +
+    '</div>' +
+    renderLevelDropdown(levels, filters.level) +
+  '</div>';
+}
+
+let searchPlaceholderTimer = null;
+function initSearchPlaceholder() {
+  if (searchPlaceholderTimer) { clearTimeout(searchPlaceholderTimer); searchPlaceholderTimer = null; }
+  var phrases = ['\u041f\u043e\u0438\u0441\u043a \u0437\u0430\u0434\u0430\u0447...', 'Redis \u043a\u044d\u0448\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435', 'REST API', 'WebSocket', '\u041c\u0438\u0433\u0440\u0430\u0446\u0438\u0438 \u0411\u0414', 'CI/CD pipeline', '\u0422\u0435\u0433: database', '\u0422\u0435\u0433: react'];
+  var idx = 0, charIdx = 0, deleting = false;
+  var input = document.querySelector('[data-task-search]');
+  var ph = document.querySelector('[data-search-placeholder]');
+  if (!input || !ph) return;
+  function tick() {
+    if (document.activeElement === input || input.value) { ph.textContent = ''; return; }
+    var word = phrases[idx];
+    if (!deleting) {
+      charIdx++;
+      if (charIdx > word.length) { setTimeout(function() { deleting = true; tick(); }, 1400); return; }
+    } else {
+      charIdx--;
+      if (charIdx < 0) { deleting = false; idx = (idx + 1) % phrases.length; searchPlaceholderTimer = setTimeout(tick, 400); return; }
+    }
+    ph.textContent = word.slice(0, charIdx);
+    searchPlaceholderTimer = setTimeout(tick, deleting ? 35 : 70);
+  }
+  input.addEventListener('focus', function() { ph.textContent = ''; });
+  input.addEventListener('blur', function() { if (!input.value) tick(); });
+  tick();
+}
+
+function renderLevelDropdown(levels, activeLevel) {
+  var levelColors = { Junior: '#22c55e', Middle: '#f59e0b', Senior: '#ef4444' };
+  var levelHints = { Junior: 'База', Middle: 'Практика', Senior: 'Сложно' };
+  var label = activeLevel === 'all' ? 'Уровень' : activeLevel;
+  var dot = activeLevel !== 'all' ? '<span class="tasks-dropdown__dot" style="background:' + levelColors[activeLevel] + '"></span>' : '';
+
+  return '<div class="tasks-dropdown" data-dropdown="level">' +
+    '<button type="button" class="tasks-dropdown__trigger' + (activeLevel !== 'all' ? ' tasks-dropdown__trigger--active' : '') + '" data-dropdown-trigger="level" onclick="toggleDropdown(\'level\')">' +
+      dot +
+      '<span class="tasks-dropdown__value">' + escapeHtml(label) + '</span>' +
+      '<svg class="tasks-dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+    '</button>' +
+    '<div class="tasks-dropdown__menu" data-dropdown-menu="level" hidden>' +
+      '<button type="button" class="tasks-dropdown__item' + (activeLevel === 'all' ? ' tasks-dropdown__item--active' : '') + '" data-task-filter="level" data-filter-value="all" onclick="setTaskFilter(\'level\', \'all\'); closeDropdown(\'level\')">' +
+        '<span class="tasks-dropdown__item-dot" style="background:var(--cd-text-subtle)"></span>' +
+        '<span class="tasks-dropdown__item-label">Любой уровень</span>' +
+      '</button>' +
+      levels.map(function(value) {
+        return '<button type="button" class="tasks-dropdown__item' + (activeLevel === value ? ' tasks-dropdown__item--active' : '') + '" data-task-filter="level" data-filter-value="' + escapeHtml(value) + '" onclick="setTaskFilter(\'level\', ' + jsArg(value) + '); closeDropdown(\'level\')">' +
+          '<span class="tasks-dropdown__item-dot" style="background:' + levelColors[value] + '"></span>' +
+          '<span class="tasks-dropdown__item-label">' + escapeHtml(value) + '</span>' +
+          '<span class="tasks-dropdown__item-hint">' + escapeHtml(levelHints[value]) + '</span>' +
+        '</button>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+}
+
+function toggleDropdown(name) {
+  var menu = document.querySelector('[data-dropdown-menu="' + name + '"]');
+  if (!menu) return;
+  var isOpen = !menu.hidden;
+  closeAllDropdowns();
+  if (!isOpen) {
+    menu.hidden = false;
+    document.addEventListener('click', onDropdownOutsideClick, { once: true, capture: true });
+  }
+}
+
+function closeDropdown(name) {
+  var menu = document.querySelector('[data-dropdown-menu="' + name + '"]');
+  if (menu) menu.hidden = true;
+}
+
+function closeAllDropdowns() {
+  $$('[data-dropdown-menu]').forEach(function(m) { m.hidden = true; });
+}
+
+function onDropdownOutsideClick(e) {
+  if (!e.target.closest('[data-dropdown]')) {
+    closeAllDropdowns();
+  }
+}
+
+function getFilterSummary(value, fallback) {
+  return value === 'all' ? fallback : value;
+}
+
+function renderTaskSegmentedType(types, activeType) {
+  const values = ['all'].concat(types);
+  const activeIndex = Math.max(0, values.indexOf(activeType));
+  const labels = { all: 'Все' };
+
+  return '<section class="tasks-filter-card tasks-filter-card--type">' +
+    '<div class="tasks-segmented" role="tablist" style="--segments:' + values.length + ';--active:' + activeIndex + '">' +
+      '<span class="tasks-segmented__indicator" aria-hidden="true"></span>' +
+      values.map(value => '<button type="button" role="tab" data-segmented-button data-task-filter="type" data-filter-value="' + escapeHtml(value) + '" aria-selected="' + (activeType === value ? 'true' : 'false') + '" class="tasks-segmented__item' + (activeType === value ? ' tasks-segmented__item--active' : '') + '" onclick="setTaskFilter(\'type\', ' + jsArg(value) + ')">' + escapeHtml(labels[value] || value) + '</button>').join('') +
+    '</div>' +
+  '</section>';
+}
+
+function renderTaskLanguageFilter(languages, activeLanguages) {
+  const open = activeLanguages && activeLanguages.length ? ' open' : '';
+  const summary = activeLanguages && activeLanguages.length ? activeLanguages.length + ' выбрано' : 'Все';
+  return '<details class="tasks-filter-card tasks-filter-card--language"' + open + '>' +
+    '<summary class="tasks-filter-card__summary"><span class="tasks-filter-card__summary-left"><span class="tasks-filter-card__label">Язык</span><strong data-filter-summary="language">' + escapeHtml(summary) + '</strong></span><svg class="tasks-filter-card__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>' +
+    '<div class="tasks-filter-list">' +
+      languages.map(function(value) {
+        var active = activeLanguages && activeLanguages.includes(value);
+        var count = MOCK_TASKS.filter(function(t) { return t.language === value; }).length;
+        return '<button type="button" role="option" data-task-language="' + escapeHtml(value) + '" aria-pressed="' + (active ? 'true' : 'false') + '" class="tasks-filter-row' + (active ? ' tasks-filter-row--active' : '') + '" onclick="toggleTaskLanguage(' + jsArg(value) + ')">' +
+          '<span class="tasks-filter-row__check">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</span>' +
+          '<span class="tasks-filter-row__text">' + escapeHtml(value) + '</span>' +
+          '<span class="tasks-filter-row__count">' + count + '</span>' +
+        '</button>';
+      }).join('') +
+    '</div>' +
+  '</details>';
+}
+
+function renderTaskLevelFilter(levels, activeLevel) {
+  const open = activeLevel !== 'all' ? ' open' : '';
+  const levelHints = { Junior: 'База', Middle: 'Практика', Senior: 'Сложно' };
+  return '<details class="tasks-filter-card tasks-filter-card--level"' + open + '>' +
+    '<summary class="tasks-filter-card__summary"><span><span class="tasks-filter-card__label">Уровень</span><strong data-filter-summary="level">' + escapeHtml(getFilterSummary(activeLevel, 'Любой')) + '</strong></span></summary>' +
+    '<div class="tasks-level-list">' +
+      ['all'].concat(levels).map(value => '<button type="button" role="option" data-task-filter="level" data-filter-value="' + escapeHtml(value) + '" aria-selected="' + (activeLevel === value ? 'true' : 'false') + '" class="tasks-level-option' + (activeLevel === value ? ' tasks-level-option--active' : '') + '" onclick="setTaskFilter(\'level\', ' + jsArg(value) + ')"><span class="tasks-level-option__name">' + escapeHtml(value === 'all' ? 'Любой уровень' : value) + '</span><span class="tasks-level-option__hint">' + escapeHtml(value === 'all' ? 'без ограничения' : levelHints[value]) + '</span></button>').join('') +
+    '</div>' +
+  '</details>';
+}
+
+function renderTaskTagFilters(tags, activeTags) {
+  const open = activeTags.length ? ' open' : '';
+  const summary = activeTags.length ? activeTags.length + ' выбрано' : 'Все';
+  return '<details class="tasks-filter-card tasks-filter-card--tags"' + open + '>' +
+    '<summary class="tasks-filter-card__summary"><span class="tasks-filter-card__summary-left"><span class="tasks-filter-card__label">Теги</span><strong data-filter-summary="tags">' + escapeHtml(summary) + '</strong></span><svg class="tasks-filter-card__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>' +
+    '<div class="tasks-filter-tags">' +
+      tags.map(tag => '<button type="button" data-task-tag="' + escapeHtml(tag) + '" aria-pressed="' + (activeTags.includes(tag) ? 'true' : 'false') + '" class="tasks-tag-filter' + (activeTags.includes(tag) ? ' tasks-tag-filter--active' : '') + '" onclick="toggleTaskTag(' + jsArg(tag) + ')">' +
+        '<span class="tasks-tag-filter__text">' + escapeHtml(tag) + '</span>' +
+        (activeTags.includes(tag) ? '<svg class="tasks-tag-filter__x" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' : '') +
+      '</button>'
+    ).join('') +
+    '</div>' +
+  '</details>';
+}
+
+function renderTaskFilters(filters, languages, tags) {
+  return '<aside class="tasks-sidebar" aria-label="Фильтры задач">' +
+    '<div class="tasks-sidebar__header"><span>Фильтры</span>' +
+      '<button type="button" class="tasks-filters__clear" onclick="clearTaskFilters()"' + (hasActiveTaskFilters() ? '' : ' hidden') + '>Сбросить</button>' +
+    '</div>' +
+    renderTaskLanguageFilter(languages, filters.language) +
+    renderTaskTagFilters(tags, filters.tags || []) +
+  '</aside>';
+}
+
+function createTaskCard(task) {
+  var typeColors = { Backend: 'var(--cd-primary)', Frontend: 'var(--cd-success, #22c55e)' };
+  var complexityConfig = {
+    Junior: { color: '#16a34a', bg: '#dcfce7', border: '#16a34a' },
+    Middle: { color: '#eab308', bg: '#fef9c3', border: '#eab308' },
+    Senior: { color: '#dc2626', bg: '#fee2e2', border: '#dc2626' }
+  };
+  var level = task.complexity || 'Middle';
+  var cConf = complexityConfig[level] || complexityConfig.Middle;
+  var accentColor = typeColors[task.type] || 'var(--cd-primary)';
+  var tagsHtml = task.tags.map(function(tag) { return '<span class="task-tag">' + escapeHtml(tag) + '</span>'; }).join('');
+  var el = document.createElement('button');
+
+  el.type = 'button';
+  el.className = 'task-card task-card--layout';
+  el.setAttribute('aria-label', 'Открыть задачу: ' + task.title);
+  el.innerHTML =
+    '<div class="task-card__body">' +
+      '<div class="task-card__header">' +
+        '<h3 class="task-card__title">' + escapeHtml(task.title) + '</h3>' +
+        '<span class="task-card__level" style="color:' + cConf.color + ';background:' + cConf.bg + ';border-color:' + cConf.border + '">' +
+          escapeHtml(level) +
+        '</span>' +
+      '</div>' +
+      '<p class="task-card__desc">' + escapeHtml(task.description) + '</p>' +
+      '<div class="task-card__footer">' +
+        '<div class="task-card__meta">' +
+          '<span class="task-card__lang"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' + escapeHtml(task.language) + '</span>' +
+          '<span class="task-card__type-dot" style="background:' + accentColor + '"></span>' +
+          '<span class="task-card__type-label">' + escapeHtml(task.type) + '</span>' +
+        '</div>' +
+        '<div class="task-card__tags">' + tagsHtml + '</div>' +
+      '</div>' +
+    '</div>';
+
+  el.addEventListener('click', function() {
+    state.currentTaskId = task.id;
+    navigate('task-detail');
+  });
+
+  return el;
+}
+
+async function renderTaskTiles() {
+  const board = document.getElementById('tasks-board');
+  if (!board) return;
+
+  const runId = ++taskLayoutRunId;
+
+  const tasks = await listTasksFromApi(TASKS_API_LIMIT);
+  if (runId !== taskLayoutRunId) return;
+
+  await window.TaskTileLayout.render({
+    board: board,
+    items: tasks,
+    createCard: createTaskCard,
+    isCancelled: function() { return runId !== taskLayoutRunId; },
+  });
+}
+
+const TYPE_CONTENT = {
+  backend: {
+    label: 'Backend',
+    title: 'Серверная задача',
+    copy: 'Собери решение вокруг контракта, обработки ошибок и устойчивого поведения по ТЗ.',
+    checklist: ['Проверь входные и выходные контракты', 'Обработай ошибки и пограничные случаи', 'Сохрани логику тестируемой и изолированной']
+  },
+  frontend: {
+    label: 'Frontend',
+    title: 'Frontend-задача',
+    copy: 'Собери интерфейс вокруг состояния, сценариев взаимодействия и аккуратной обработки edge cases.',
+    checklist: ['Проверь состояния загрузки, ошибки и пустые данные', 'Сохрани доступность базовых элементов', 'Раздели UI, состояние и побочные эффекты']
+  }
+};
+
+const LANGUAGE_CONTENT = {
+  typescript: { label: 'TypeScript', checklist: ['Опиши типы входов и результата', 'Избегай any в ключевой логике', 'Обработай невалидные состояния'] },
+  ts: { label: 'TypeScript', checklist: ['Опиши типы входов и результата', 'Избегай any в ключевой логике', 'Обработай невалидные состояния'] },
+  javascript: { label: 'JavaScript', checklist: ['Проверь асинхронные сценарии', 'Не смешивай бизнес-логику и представление', 'Обработай невалидные входные данные'] },
+  js: { label: 'JavaScript', checklist: ['Проверь асинхронные сценарии', 'Не смешивай бизнес-логику и представление', 'Обработай невалидные входные данные'] },
+  go: { label: 'Go', checklist: ['Проверь работу с context и ошибками', 'Держи интерфейсы небольшими', 'Добавь тесты для ключевой логики'] },
+  golang: { label: 'Go', checklist: ['Проверь работу с context и ошибками', 'Держи интерфейсы небольшими', 'Добавь тесты для ключевой логики'] },
+  python: { label: 'Python', checklist: ['Сделай поведение явным через тесты', 'Проверь обработку исключений', 'Сохрани код читаемым и простым'] },
+  java: { label: 'Java', checklist: ['Выдели контракты и модели', 'Проверь исключения и null-сценарии', 'Сохрани слои решения независимыми'] },
+  rust: { label: 'Rust', checklist: ['Опиши ошибки через Result', 'Проверь ownership на границах модулей', 'Добавь тесты для core-логики'] },
+  sql: { label: 'SQL', checklist: ['Проверь миграции на обратимость', 'Сохрани индексы для частых запросов', 'Тестируй на пустых данных'] },
+  yaml: { label: 'YAML', checklist: ['Проверь синтаксис и валидность', 'Опиши секреты отдельно', 'Добавь комментарии к неочевидным шагам'] },
+};
+
+function normalizedType(type) { return String(type || '').toLowerCase().replace(/\s+/g, '').replace('-', ''); }
+
+function typeContent(type) {
+  return TYPE_CONTENT[normalizedType(type)] || {
+    label: type || 'Тип не указан',
+    title: type ? type + '-задача' : 'Задача',
+    copy: 'Собери решение строго по условию и проверь ключевые сценарии из ТЗ.',
+    checklist: ['Разбери требования из ТЗ', 'Зафиксируй входы и ожидаемый результат', 'Проверь пограничные сценарии']
+  };
+}
+
+function languageContent(language) {
+  var normalized = String(language || '').toLowerCase();
+  return LANGUAGE_CONTENT[normalized] || {
+    label: language || 'Не указан',
+    checklist: ['Соблюдай выбранный стек решения', 'Держи код читаемым', 'Проверь основную логику перед отправкой']
+  };
+}
+
+function tagSummary(tags) {
+  if (!tags.length) return 'фокус указан в ТЗ';
+  return tags.slice(0, 4).join(', ');
+}
+
+function renderTaskLandingGeneratedGrid(task, accentColor, cConf) {
+  var type = typeContent(task.type);
+  var language = languageContent(task.language);
+  var cards = [
+    { title: type.title, text: type.copy },
+    {
+      title: task.language ? 'Решение на ' + language.label : 'Язык решения',
+      text: task.language ? 'Пиши решение на ' + language.label + ' и сверяй реализацию с требованиями из ТЗ.' : 'Язык решения не указан, поэтому ориентируйся на требования из ТЗ.'
+    },
+    {
+      title: task.tags.length ? 'Технический фокус' : 'Фокус из условия',
+      text: task.tags.length ? 'Держи в фокусе темы: ' + tagSummary(task.tags) + '.' : 'Дополнительные теги не переданы — основной источник требований находится в ТЗ.'
+    }
+  ];
+
+  return cards.map(function(card) {
+    return '<article class="cd-card task-generated-card">' +
+      '<h3>' + escapeHtml(card.title) + '</h3>' +
+      '<p>' + escapeHtml(card.text) + '</p>' +
+    '</article>';
+  }).join('');
+}
+
+function renderTaskLandingChecklist(task) {
+  var type = typeContent(task.type);
+  var language = languageContent(task.language);
+  var items = type.checklist.slice(0, 2).concat(language.checklist.slice(0, 2));
+  var uniqueItems = items.filter(function(item, i) { return items.indexOf(item) === i; }).slice(0, 5);
+
+  return uniqueItems.map(function(item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
+}
+
+function pageTaskDetail() {
+  if (!state.user) { navigate('login'); return ''; }
+  var task = MOCK_TASKS.find(function(t) { return t.id === state.currentTaskId; });
+  if (!task) { navigate('tasks'); return ''; }
+
+  var typeColors = { Backend: 'var(--cd-primary)', Frontend: 'var(--cd-success, #22c55e)' };
+  var complexityConfig = {
+    Junior: { color: '#16a34a', bg: '#dcfce7', border: '#16a34a' },
+    Middle: { color: '#eab308', bg: '#fef9c3', border: '#eab308' },
+    Senior: { color: '#dc2626', bg: '#fee2e2', border: '#dc2626' }
+  };
+  var level = task.complexity || 'Middle';
+  var cConf = complexityConfig[level] || complexityConfig.Middle;
+  var accentColor = typeColors[task.type] || 'var(--cd-primary)';
+
+  var tagsHtml = task.tags.map(function(tag) { return '<span class="task-tag">' + escapeHtml(tag) + '</span>'; }).join('');
+  var tzHtml = renderMarkdown(task.tz);
+  var generatedGridHtml = renderTaskLandingGeneratedGrid(task, accentColor, cConf);
+  var checklistHtml = renderTaskLandingChecklist(task);
+
+  return appHeader() +
+    '<main class="cd-page task-page">' +
+    '<div class="task-grid-bg" aria-hidden="true"></div>' +
+
+    '<section class="task-hero" id="task-overview">' +
+      '<div class="cd-container task-hero-layout">' +
+        '<div class="task-hero-copy">' +
+          '<div class="task-chip-row" id="task-kicker">' +
+            '<span class="task-card__type-dot" style="background:' + accentColor + '"></span>' +
+            '<span class="task-card__type-label">' + escapeHtml(task.type) + '</span>' +
+            '<span class="task-card__lang"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' + escapeHtml(task.language) + '</span>' +
+            '<span class="task-card__level" style="color:' + cConf.color + ';background:' + cConf.bg + ';border-color:' + cConf.border + '">' + escapeHtml(level) + '</span>' +
+          '</div>' +
+          '<h1 class="task-title">' + escapeHtml(task.title) + '</h1>' +
+          '<p class="task-description">' + escapeHtml(task.description || 'Описание задачи появится здесь, когда оно будет передано.') + '</p>' +
+          '<div class="task-tags">' + tagsHtml + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+
+    '<section class="cd-section task-section-tight">' +
+      '<div class="cd-container cd-stack-lg">' +
+        '<div class="task-section-heading cd-stack">' +
+          '<h2>Короткая карта перед стартом</h2>' +
+          '<p>Сначала разберись с форматом, затем переходи к полному ТЗ и реализации.</p>' +
+        '</div>' +
+        '<div class="task-generated-grid">' + generatedGridHtml + '</div>' +
+      '</div>' +
+    '</section>' +
+
+    '<section class="cd-section" id="task-spec">' +
+      '<div class="cd-container task-content-layout">' +
+        '<article class="cd-card task-spec-card">' +
+          '<header class="task-spec-header">' +
+            '<div><h2>Техническое задание</h2></div>' +
+          '</header>' +
+          '<div class="task-spec-body">' +
+            '<div class="task-markdown">' + tzHtml + '</div>' +
+          '</div>' +
+        '</article>' +
+        '<aside class="task-side" aria-label="Чеклист">' +
+          '<section class="cd-card-soft task-checklist-card">' +
+            '<h3>Перед отправкой</h3>' +
+            '<p>Проверь эти пункты перед отправкой решения.</p>' +
+            '<ul class="task-checklist">' + checklistHtml + '</ul>' +
+          '</section>' +
+        '</aside>' +
+      '</div>' +
+    '</section>' +
+
+  '</main>';
+}
+
+/* ==========================================================================
+   MODALS — CHANGE PASSWORD
+   ========================================================================== */
+
+function startChangePassword() {
+  state.changePasswordStep = 1;
+  renderChangePasswordModal();
+}
+
+function renderChangePasswordModal() {
+  const step = state.changePasswordStep;
+  let body = '';
+  if (step === 1) {
+    body = '<form onsubmit="return doChangePasswordStep1(event)">' +
+      '<div class="cd-field"><label class="cd-label" for="cp-pass">Текущий пароль</label><div class="password-field"><input class="cd-input" id="cp-pass" type="password" placeholder="Введите пароль" required style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)">\u25CB</button></div></div>' +
+      '<div id="cp-error"></div>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="submit" class="cd-button cd-button-primary" id="cp-btn">Продолжить</button></div></form>';
+  } else if (step === 2) {
+    body = '<p style="font-size:var(--cd-text-sm);color:var(--cd-text-muted)">Мы отправили код подтверждения на ваш email.</p>' +
+      '<div class="code-input" id="code-input">' + [0,1,2,3,4,5].map(i => '<input class="code-input__cell" type="text" inputmode="numeric" maxlength="1" aria-label="Цифра '+(i+1)+'" data-idx="'+i+'" />').join('') + '</div>' +
+      '<div id="cp-error"></div>' +
+      '<button type="button" class="resend-btn" id="resend-cp" onclick="doResendCode(\'change-pwd\')">Отправить код ещё раз</button>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="button" class="cd-button cd-button-primary" onclick="doChangePasswordStep2()">Подтвердить код</button></div>';
+  } else if (step === 3) {
+    body = '<form onsubmit="return doChangePasswordStep3(event)">' +
+      '<div class="cd-field"><label class="cd-label" for="cp-new">Новый пароль</label><div class="password-field"><input class="cd-input" id="cp-new" type="password" placeholder="Введите пароль" required autocomplete="new-password" style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)">\u25CB</button></div></div>' +
+      '<div class="cd-field"><label class="cd-label" for="cp-new2">Повторите пароль</label><div class="password-field"><input class="cd-input" id="cp-new2" type="password" placeholder="Введите пароль" required autocomplete="new-password" style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)">\u25CB</button></div></div>' +
+      '<div id="cp-error"></div>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="submit" class="cd-button cd-button-primary">Сохранить пароль</button></div></form>';
+  }
+  renderModal('Смена пароля', body, step);
+}
+
+function doChangePasswordStep1(e) {
+  e.preventDefault();
+  const pass = document.getElementById('cp-pass').value;
+  if (!pass) return false;
+  showLoadingBtn('cp-btn');
+  setTimeout(() => {
+    state.changePasswordStep = 2;
+    renderChangePasswordModal();
+    toast('Код отправлен на ' + state.user.email, 'success');
+  }, 600);
+  return false;
+}
+
+function doChangePasswordStep2() {
+  const cells = $$('.code-input__cell');
+  const code = cells.map(c => c.value).join('');
+  if (code.length < 6) { showFieldError('cp-error', 'Введите полный код'); return; }
+  state.changeToken = 'mock_change_token_' + Date.now();
+  state.changePasswordStep = 3;
+  renderChangePasswordModal();
+}
+
+function doChangePasswordStep3(e) {
+  e.preventDefault();
+  const p1 = document.getElementById('cp-new').value;
+  const p2 = document.getElementById('cp-new2').value;
+  if (p1.length < 8) { showFieldError('cp-error', 'Пароль должен содержать минимум 8 символов'); return false; }
+  if (p1 !== p2) { showFieldError('cp-error', 'Пароли не совпадают'); return false; }
+  setTimeout(() => {
+    closeModal();
+    toast('Пароль изменён', 'success');
+    setTimeout(() => toast('Все остальные сессии были завершены', 'info'), 500);
+  }, 400);
+  return false;
+}
+
+/* ==========================================================================
+   MODALS — CHANGE EMAIL
+   ========================================================================== */
+
+function startChangeEmail() {
+  state.changeEmailStep = 1;
+  state.newEmail = '';
+  renderChangeEmailModal();
+}
+
+function renderChangeEmailModal() {
+  const step = state.changeEmailStep;
+  let body = '';
+  if (step === 1) {
+    body = '<p style="font-size:var(--cd-text-sm);color:var(--cd-text-muted)">Для смены email подтвердите, что это вы.</p>' +
+      '<form onsubmit="return doChangeEmailStep1(event)">' +
+      '<div class="cd-field"><label class="cd-label" for="ce-pass">Пароль</label><div class="password-field"><input class="cd-input" id="ce-pass" type="password" placeholder="Введите пароль" required style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)">\u25CB</button></div></div>' +
+      '<div id="ce-error"></div>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="submit" class="cd-button cd-button-primary" id="ce-btn">Продолжить</button></div></form>';
+  } else if (step === 2) {
+    body = '<p style="font-size:var(--cd-text-sm);color:var(--cd-text-muted)">Введите код, отправленный на текущий email.</p>' +
+      '<div class="code-input" id="code-input">' + [0,1,2,3,4,5].map(i => '<input class="code-input__cell" type="text" inputmode="numeric" maxlength="1" aria-label="Цифра '+(i+1)+'" data-idx="'+i+'" />').join('') + '</div>' +
+      '<div id="ce-error"></div>' +
+      '<button type="button" class="resend-btn" id="resend-ce" onclick="doResendCode(\'change-email-current\')">Отправить код ещё раз</button>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="button" class="cd-button cd-button-primary" onclick="doChangeEmailStep2()">Подтвердить код</button></div>';
+  } else if (step === 3) {
+    body = '<form onsubmit="return doChangeEmailStep3(event)">' +
+      '<div class="cd-field"><label class="cd-label" for="ce-new">Новый email</label><input class="cd-input" id="ce-new" type="email" placeholder="name@company.com" required /></div>' +
+      '<div id="ce-error"></div>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Назад</button><button type="submit" class="cd-button cd-button-primary">Отправить код на новый email</button></div></form>';
+  } else if (step === 4) {
+    body = '<p style="font-size:var(--cd-text-sm);color:var(--cd-text-muted)">Введите код, отправленный на <strong>' + state.newEmail + '</strong>.</p>' +
+      '<div class="code-input" id="code-input">' + [0,1,2,3,4,5].map(i => '<input class="code-input__cell" type="text" inputmode="numeric" maxlength="1" aria-label="Цифра '+(i+1)+'" data-idx="'+i+'" />').join('') + '</div>' +
+      '<div id="ce-error"></div>' +
+      '<button type="button" class="resend-btn" id="resend-ce-new" onclick="doResendCode(\'change-email-new\')">Отправить код ещё раз</button>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="button" class="cd-button cd-button-danger" onclick="doChangeEmailStep4()">Завершить смену email</button></div>';
+  }
+  renderModal('Смена email', body, step);
+}
+
+function doChangeEmailStep1(e) {
+  e.preventDefault();
+  showLoadingBtn('ce-btn');
+  setTimeout(() => {
+    state.changeEmailStep = 2;
+    renderChangeEmailModal();
+    toast('Код отправлен на ' + state.user.email, 'success');
+  }, 600);
+  return false;
+}
+
+function doChangeEmailStep2() {
+  const cells = $$('.code-input__cell');
+  const code = cells.map(c => c.value).join('');
+  if (code.length < 6) { showFieldError('ce-error', 'Введите полный код'); return; }
+  state.identityToken = 'mock_identity_token_' + Date.now();
+  state.changeEmailStep = 3;
+  renderChangeEmailModal();
+}
+
+function doChangeEmailStep3(e) {
+  e.preventDefault();
+  const email = document.getElementById('ce-new').value;
+  if (!email) return false;
+  state.newEmail = email;
+  state.changeEmailStep = 4;
+  renderChangeEmailModal();
+  toast('Код отправлен на ' + email, 'success');
+  return false;
+}
+
+function doChangeEmailStep4() {
+  const cells = $$('.code-input__cell');
+  const code = cells.map(c => c.value).join('');
+  if (code.length < 6) { showFieldError('ce-error', 'Введите полный код'); return; }
+  state.user.email = state.newEmail;
+  state.identityToken = null;
+  closeModal();
+  toast('Email изменён', 'success');
+  setTimeout(() => toast('Все остальные сессии были завершены', 'info'), 500);
+  route();
+}
+
+/* ==========================================================================
+   MODALS — DELETE ACCOUNT
+   ========================================================================== */
+
+function startDeleteAccount() {
+  state.deleteStep = 1;
+  renderDeleteModal();
+}
+
+function renderDeleteModal() {
+  const step = state.deleteStep;
+  let body = '';
+  if (step === 1) {
+    body = '<p style="font-size:var(--cd-text-sm);color:var(--cd-text-muted)">Это действие нельзя отменить. Доступ к аккаунту и данным будет закрыт.</p>' +
+      '<ul class="modal__consequences"><li>Профиль будет недоступен</li><li>Вход в аккаунт будет невозможен</li><li>Восстановление может быть недоступно</li><li>Связанные рабочие данные обрабатываются согласно правилам продукта</li></ul>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="button" class="cd-button cd-button-danger" onclick="state.deleteStep=2;renderDeleteModal()">Продолжить удаление</button></div>';
+  } else if (step === 2) {
+    body = '<form onsubmit="return doDeleteStep2(event)">' +
+      '<div class="cd-field"><label class="cd-label" for="del-pass">Пароль</label><div class="password-field"><input class="cd-input" id="del-pass" type="password" placeholder="Введите пароль" required style="padding-right:48px" /><button type="button" class="password-field__toggle" onclick="togglePassword(this)">\u25CB</button></div></div>' +
+      '<div id="del-error"></div>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="submit" class="cd-button cd-button-danger" id="del-btn">Запросить код удаления</button></div></form>';
+  } else if (step === 3) {
+    body = '<p style="font-size:var(--cd-text-sm);color:var(--cd-text-muted)">Мы отправили код подтверждения на ваш email.</p>' +
+      '<div class="code-input" id="code-input">' + [0,1,2,3,4,5].map(i => '<input class="code-input__cell" type="text" inputmode="numeric" maxlength="1" aria-label="Цифра '+(i+1)+'" data-idx="'+i+'" />').join('') + '</div>' +
+      '<div id="del-error"></div>' +
+      '<button type="button" class="resend-btn" id="resend-del" onclick="doResendCode(\'delete\')">Отправить код ещё раз</button>' +
+      '<div class="modal__footer"><button type="button" class="cd-button cd-button-ghost" onclick="closeModal()">Отмена</button><button type="button" class="cd-button cd-button-danger" onclick="doDeleteStep3()">Удалить аккаунт</button></div>';
+  }
+  renderModal('Удалить аккаунт?', body, step);
+}
+
+function doDeleteStep2(e) {
+  e.preventDefault();
+  showLoadingBtn('del-btn');
+  setTimeout(() => {
+    state.deleteStep = 3;
+    renderDeleteModal();
+    toast('Код отправлен', 'info');
+  }, 600);
+  return false;
+}
+
+function doDeleteStep3() {
+  const cells = $$('.code-input__cell');
+  const code = cells.map(c => c.value).join('');
+  if (code.length < 6) { showFieldError('del-error', 'Введите полный код'); return; }
+  closeModal();
+  state.user = null;
+  navigate('account-deleted');
+}
+
+/* ==========================================================================
+   MODAL HELPER
+   ========================================================================== */
+
+function renderModal(title, body, step) {
+  const existing = document.querySelector('.modal-overlay');
+  if (existing) existing.remove();
+  const stepsHtml = step ? '<div class="auth-steps">' + [1,2,3,4].map(s => '<div class="auth-steps__step' + (s < step ? ' auth-steps__step--done' : s === step ? ' auth-steps__step--active' : '') + '"></div>').join('') + '</div>' : '';
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
+  overlay.innerHTML = '<div class="modal"><div class="modal__header"><h2 class="modal__title">' + title + '</h2><button class="modal__close" onclick="closeModal()">\u00d7</button></div>' + stepsHtml + '<div class="modal__body">' + body + '</div></div>';
+  document.body.appendChild(overlay);
+  // setup code input
+  setTimeout(setupCodeInput, 50);
+}
+
+function closeModal() {
+  const m = document.querySelector('.modal-overlay');
+  if (m) m.remove();
+}
+
+/* ==========================================================================
+   CODE INPUT SETUP
+   ========================================================================== */
+
+function setupCodeInput() {
+  const cells = $$('.code-input__cell');
+  cells.forEach((cell, i) => {
+    cell.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 1);
+      if (this.value && i < cells.length - 1) cells[i + 1].focus();
+    });
+    cell.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !this.value && i > 0) {
+        cells[i - 1].focus();
+        cells[i - 1].value = '';
+      }
+    });
+    cell.addEventListener('paste', function(e) {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      text.split('').forEach((ch, j) => { if (cells[j]) cells[j].value = ch; });
+      if (text.length > 0) cells[Math.min(text.length, cells.length - 1)].focus();
+    });
+  });
+}
+
+/* ==========================================================================
+   FORM ACTIONS
+   ========================================================================== */
+
+function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) return false;
+  showLoadingBtn('login-btn');
+  setTimeout(() => {
+    if (email === 'blocked@codurity.com') {
+      navigate('blocked'); return;
+    }
+    state.user = { id: genId(), email: email, email_verified: true, status: 'active', created_at: new Date().toISOString() };
+    toast('Добро пожаловать!', 'success');
+    navigate('tasks');
+  }, 700);
+  return false;
+}
+
+function doRegister(e) {
+  e.preventDefault();
+  const email = document.getElementById('reg-email').value;
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  if (!email || !pass || !pass2) return false;
+  if (pass.length < 8) { showFieldError('register-error', 'Пароль должен содержать минимум 8 символов'); return false; }
+  if (pass !== pass2) { showFieldError('register-error', 'Пароли не совпадают'); return false; }
+  showLoadingBtn('reg-btn');
+  setTimeout(() => {
+    state.registerEmail = email;
+    state.user = { id: genId(), email: email, email_verified: false, status: 'pending_verification', created_at: new Date().toISOString() };
+    navigate('verify');
+  }, 600);
+  return false;
+}
+
+function doVerify(e) {
+  e.preventDefault();
+  const cells = $$('.code-input__cell');
+  const code = cells.map(c => c.value).join('');
+  if (code.length < 6) { showFieldError('verify-error', 'Введите полный код'); return false; }
+  showLoadingBtn('verify-btn');
+  setTimeout(() => {
+    state.user.email_verified = true;
+    state.user.status = 'active';
+    toast('Email подтверждён!', 'success');
+    navigate('tasks');
+  }, 600);
+  return false;
+}
+
+function doForgot(e) {
+  e.preventDefault();
+  const email = document.getElementById('forgot-email').value;
+  if (!email) return false;
+  showLoadingBtn('forgot-btn');
+  setTimeout(() => {
+    state.forgotEmail = email;
+    showNeutralAlert('forgot-error', 'Если аккаунт с таким email существует, мы отправили код восстановления.');
+    setTimeout(() => navigate('forgot-verify'), 1200);
+  }, 600);
+  return false;
+}
+
+function doForgotVerify(e) {
+  e.preventDefault();
+  const cells = $$('.code-input__cell');
+  const code = cells.map(c => c.value).join('');
+  if (code.length < 6) { showFieldError('forgot-verify-error', 'Введите полный код'); return false; }
+  showLoadingBtn('forgot-verify-btn');
+  setTimeout(() => {
+    state.resetToken = 'mock_reset_token_' + Date.now();
+    navigate('reset');
+  }, 600);
+  return false;
+}
+
+function doReset(e) {
+  e.preventDefault();
+  const p1 = document.getElementById('reset-pass').value;
+  const p2 = document.getElementById('reset-pass2').value;
+  if (p1.length < 8) { showFieldError('reset-error', 'Пароль должен содержать минимум 8 символов'); return false; }
+  if (p1 !== p2) { showFieldError('reset-error', 'Пароли не совпадают'); return false; }
+  showLoadingBtn('reset-btn');
+  setTimeout(() => {
+    state.resetToken = null;
+    // show success
+    const card = document.querySelector('.auth-card');
+    if (card) {
+      card.innerHTML = '<div class="auth-success"><div class="auth-success__icon">\u2713</div><h2 class="auth-success__title">Пароль обновлён</h2><p class="auth-success__text">Теперь вы можете войти с новым паролем.</p><button class="cd-button cd-button-primary" onclick="navigate(\'login\')">Войти</button></div>';
+    }
+    toast('Все остальные сессии были завершены', 'info');
+  }, 500);
+  return false;
+}
+
+function doLogout() {
+  state.user = null;
+  toast('Вы вышли из аккаунта', 'info');
+  navigate('login');
+}
+
+function doResendCode(type) {
+  const btn = document.getElementById('resend-' + type.replace('change-pwd','cp').replace('change-email-current','ce').replace('change-email-new','ce-new').replace('delete','del'));
+  if (!btn) return;
+  btn.disabled = true;
+  let sec = 30;
+  btn.textContent = 'Повторно через ' + String(sec).padStart(2, '0') + ':' + '00';
+  const iv = setInterval(() => {
+    sec--;
+    btn.textContent = 'Повторно через ' + String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+    if (sec <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = 'Отправить код ещё раз'; toast('Код отправлен повторно', 'success'); }
+  }, 1000);
+}
+
+/* ==========================================================================
+   PASSWORD REQUIREMENTS CHECK
+   ========================================================================== */
+
+function checkPasswordReqs(val) {
+  toggleReq('req-len', val.length >= 8);
+  toggleReq('req-upper', /[A-ZА-ЯЁ]/.test(val));
+  toggleReq('req-num', /[0-9]/.test(val));
+}
+
+function checkPasswordReqsReset(val) {
+  toggleReq('req-len-r', val.length >= 8);
+  toggleReq('req-upper-r', /[A-ZА-ЯЁ]/.test(val));
+  toggleReq('req-num-r', /[0-9]/.test(val));
+}
+
+function toggleReq(id, met) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'password-requirements__item ' + (met ? 'password-requirements__item--met' : 'password-requirements__item--unmet');
+  el.querySelector('.password-requirements__icon').textContent = met ? '\u2713' : '\u25CB';
+}
+
+/* ==========================================================================
+   UI HELPERS
+   ========================================================================== */
+
+function showLoadingBtn(id) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.dataset.origText = btn.textContent;
+  btn.innerHTML = '<span class="spinner"></span> Загрузка...';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = btn.dataset.origText; btn.disabled = false; }, 2000);
+}
+
+function showFieldError(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = '<div class="auth-alert auth-alert--danger"><span class="auth-alert__icon">\u26A0</span><span class="auth-alert__text">' + msg + '</span></div>';
+}
+
+function showNeutralAlert(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = '<div class="auth-alert auth-alert--info"><span class="auth-alert__icon">\u2139</span><span class="auth-alert__text">' + msg + '</span></div>';
+}
+
+/* ==========================================================================
+   ROUTER
+   ========================================================================== */
+
+function route() {
+  const p = state.currentPage;
+  let html = '';
+
+  if (p === 'login') html = pageLogin();
+  else if (p === 'register') html = pageRegister();
+  else if (p === 'verify') html = pageVerify();
+  else if (p === 'forgot') html = pageForgot();
+  else if (p === 'forgot-verify') html = pageForgotVerify();
+  else if (p === 'reset') html = pageReset();
+  else if (p === 'account-deleted') html = pageAccountDeleted();
+  else if (p === 'session-expired') html = pageSessionExpired();
+  else if (p === 'blocked') html = pageBlocked();
+  else if (p === 'error') html = pageGenericError();
+  else if (p === 'settings-profile') html = pageSettingsProfile();
+  else if (p === 'settings-security') html = pageSettingsSecurity();
+  else if (p === 'tasks') html = pageTasksList();
+  else if (p === 'task-detail') html = pageTaskDetail();
+  else html = pageLogin();
+
+  render(html);
+  document.body.classList.toggle('task-detail-open', p === 'task-detail');
+  if (document.querySelector('.code-input')) setTimeout(setupCodeInput, 50);
+  if (p === 'tasks') requestAnimationFrame(function() { updateTaskFilterControls(false); renderTaskTiles(); initSearchPlaceholder(); });
+  if (p === 'task-detail') window.scrollTo(0, 0);
+}
+
+let taskTilesResizeTimer = null;
+window.addEventListener('resize', function() {
+  if (state.currentPage !== 'tasks') return;
+  clearTimeout(taskTilesResizeTimer);
+  taskTilesResizeTimer = setTimeout(function() { recalcSegmentedControls(); renderTaskTiles(); }, 120);
+});
+
+// Init
+route();
+</script>
+</body>
+</html>

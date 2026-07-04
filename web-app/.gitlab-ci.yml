@@ -1,0 +1,26 @@
+stages:
+  - build
+
+variables:
+  IMAGE: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  IMAGE_LATEST: ${CI_REGISTRY_IMAGE}:latest
+  CACHE_IMAGE: ${CI_REGISTRY_IMAGE}/cache
+  GIT_SSL_NO_VERIFY: "1"
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR
+      -f $CI_PROJECT_DIR/build/cicd/Dockerfile
+      --destination $IMAGE
+      --destination $IMAGE_LATEST
+      --cache=true
+      --cache-repo=$CACHE_IMAGE
+      --skip-tls-verify
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "dev"

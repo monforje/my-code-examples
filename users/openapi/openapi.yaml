@@ -1,0 +1,306 @@
+openapi: 3.0.0
+info:
+  title: Users Service
+  version: 0.0.0
+tags: []
+paths:
+  /git-user/me:
+    get:
+      operationId: users.git.me.get
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitMeResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GitMeRequest'
+      security:
+        - ApiKeyAuth: []
+  /profile/me:
+    get:
+      operationId: users.profile.me.get
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /profile/me/avatar:
+    put:
+      operationId: users.profile.me.avatar.update
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAvatarResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+              required:
+                - avatar
+            encoding:
+              avatar:
+                contentType: '*/*'
+      security:
+        - BearerAuth: []
+    delete:
+      operationId: users.profile.me.avatar.delete
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAvatarResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+  /profile/me/settings:
+    patch:
+      operationId: users.profile.me.settings.update
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileSettingsRequest'
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    DeleteAvatarResponse:
+      type: object
+      required:
+        - updated_at
+      properties:
+        avatar_url:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - INVALID_JSON
+        - MISSING_AUTH_TOKEN
+        - INVALID_AUTH_TOKEN
+        - EXPIRED_AUTH_TOKEN
+        - NOT_FOUND
+        - INTERNAL_ERROR
+        - AVATAR_TOO_LARGE
+        - INVALID_AVATAR_FORMAT
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+    GitMeRequest:
+      type: object
+      required:
+        - identity_id
+      properties:
+        identity_id:
+          type: string
+    GitMeResponse:
+      type: object
+      required:
+        - username
+        - git_token
+        - git_url
+      properties:
+        username:
+          type: string
+        git_token:
+          type: string
+        git_url:
+          type: string
+    ProfileResponse:
+      type: object
+      required:
+        - id
+        - identity_id
+        - email
+        - status
+        - email_verified
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        identity_id:
+          type: string
+        email:
+          type: string
+        display_name:
+          type: string
+        bio:
+          type: string
+        avatar_url:
+          type: string
+        status:
+          type: string
+        email_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UpdateAvatarResponse:
+      type: object
+      required:
+        - avatar_url
+        - updated_at
+      properties:
+        avatar_url:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+    UpdateProfileSettingsRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+        bio:
+          type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: Bearer
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Service-Token

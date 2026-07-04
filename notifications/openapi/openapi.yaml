@@ -1,0 +1,196 @@
+openapi: 3.0.0
+info:
+  title: Notification Service
+  version: 0.0.0
+tags: []
+paths:
+  /reports/{uid}:
+    get:
+      operationId: reports.get
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CIReportResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /webhook:
+    post:
+      operationId: webhook.receive
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRequest'
+components:
+  schemas:
+    CIReportResponse:
+      type: object
+      required:
+        - uid
+        - commit
+        - status
+        - exit_code
+        - stage
+        - steps
+        - stdout
+        - stderr
+        - created_at
+      properties:
+        uid:
+          type: string
+        commit:
+          type: string
+        status:
+          $ref: '#/components/schemas/CIReportStatus'
+        exit_code:
+          type: integer
+          format: int32
+        stage:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/CIReportStep'
+        stdout:
+          type: string
+        stderr:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    CIReportStatus:
+      type: string
+      enum:
+        - pending
+        - passed
+        - failed
+        - crashed
+        - timeout
+    CIReportStep:
+      type: object
+      required:
+        - name
+        - status
+        - duration_ms
+      properties:
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/CIStepStatus'
+        duration_ms:
+          type: integer
+          format: int32
+    CIStepStatus:
+      type: string
+      enum:
+        - success
+        - failure
+        - skipped
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - INVALID_JSON
+        - MISSING_AUTH_TOKEN
+        - INVALID_AUTH_TOKEN
+        - EXPIRED_AUTH_TOKEN
+        - NOT_FOUND
+        - INTERNAL_ERROR
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+    MessageResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    WebhookEvent:
+      type: string
+      enum:
+        - ci_started
+        - ci_finished
+    WebhookRequest:
+      type: object
+      required:
+        - event
+        - uid
+        - commit
+      properties:
+        event:
+          $ref: '#/components/schemas/WebhookEvent'
+        uid:
+          type: string
+        commit:
+          type: string
+        vm_id:
+          type: string
+        exit_code:
+          type: integer
+          format: int32
+        stdout:
+          type: string
+        stderr:
+          type: string
+        stage:
+          type: string

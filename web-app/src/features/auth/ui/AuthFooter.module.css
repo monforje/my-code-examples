@@ -1,0 +1,19 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cd-space-4);
+  padding: var(--cd-space-4) var(--cd-space-6);
+  border-top: var(--cd-border-thin) solid var(--cd-border-muted);
+  font-size: var(--cd-text-xs);
+  color: var(--cd-text-subtle);
+}
+
+.footer a {
+  color: var(--cd-text-muted);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--cd-text);
+}

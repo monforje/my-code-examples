@@ -1,0 +1,17 @@
+{
+  "name": "notifications",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "email:build": "mkdir -p internal/templates/html && mjml internal/templates/mjml/*.mjml -o internal/templates/html --config.allowIncludes true",
+    "email:watch": "mkdir -p internal/templates/html && mjml -w internal/templates/mjml/*.mjml -o internal/templates/html --config.allowIncludes true"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "mjml": "^5.3.0"
+  }
+}

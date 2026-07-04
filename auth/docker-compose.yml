@@ -1,0 +1,152 @@
+x-postgres-vars: &postgres-env
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  POSTGRES_PORT: ${POSTGRES_PORT}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-disable}
+
+x-redis-vars: &redis-env
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_HOST: ${REDIS_HOST}
+  REDIS_PORT: ${REDIS_PORT}
+  REDIS_DB: ${REDIS_DB:-0}
+
+x-nats-vars: &nats-env
+  NATS_USER: ${NATS_USER}
+  NATS_PASSWORD: ${NATS_PASSWORD}
+  NATS_HOST: ${NATS_HOST}
+  NATS_PORT: ${NATS_PORT}
+
+x-kafka-vars: &kafka-env
+  KAFKA_BROKERS: ${KAFKA_BROKERS}
+
+x-app-vars: &app-env
+  APP_ENV: ${APP_ENV:-local}
+  SERVER_PORT: ${SERVER_PORT:-8080}
+  JWT_SIGNING_KEY: ${JWT_SIGNING_KEY}
+  CORS_ORIGINS: ${CORS_ORIGINS:-*}
+  CORS_METHODS: ${CORS_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
+  CORS_HEADERS: ${CORS_HEADERS:-Authorization,Content-Type}
+  ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+  REFRESH_TOKEN_LEN: ${REFRESH_TOKEN_LEN:-32}
+  REFRESH_SESSION_TTL: ${REFRESH_SESSION_TTL:-720h}
+  CODE_MAX_ATTEMPTS: ${CODE_MAX_ATTEMPTS:-5}
+  CODE_TTL: ${CODE_TTL:-15m}
+  CODE_RESEND_COOLDOWN: ${CODE_RESEND_COOLDOWN:-1m}
+  CODE_RESEND_WINDOW: ${CODE_RESEND_WINDOW:-15m}
+  CODE_RESEND_MAX_REQUESTS: ${CODE_RESEND_MAX_REQUESTS:-5}
+  PASSWORD_CHANGE_TOKEN_TTL: ${PASSWORD_CHANGE_TOKEN_TTL:-15m}
+  PASSWORD_RESET_TOKEN_TTL: ${PASSWORD_RESET_TOKEN_TTL:-15m}
+  EMAIL_CHANGE_TOKEN_TTL: ${EMAIL_CHANGE_TOKEN_TTL:-15m}
+  VERIFICATION_URL: ${VERIFICATION_URL:-http://localhost:5173/cli/login}
+  <<: [*postgres-env, *redis-env, *nats-env, *kafka-env]
+
+services:
+# Бекенд сервис, запускающийся в режиме hot-reload с помошью air
+  rest:
+    container_name: auth_http
+    networks:
+      - traefik
+    build:
+      context: .
+      dockerfile: build/local/Dockerfile
+    environment:
+      <<: *app-env
+    volumes:
+      - ./:/app
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.auth-service.rule=Host(`codurity.ai`) && PathPrefix(`/api/v1/auth`)
+      - traefik.http.routers.auth-service.entrypoints=web
+      - traefik.http.services.auth-service.loadbalancer.server.port=${SERVER_PORT:-8080}
+
+# sql база данных PostgreSQL 
+  database:
+    container_name: auth_postgres
+    networks:
+      - traefik
+    image: postgres:17-alpine3.23
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# кэш для verification codes
+  cache:
+    container_name: redis
+    networks:
+      - traefik
+    image: redis:8-alpine3.23
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+
+  cache_ui:
+    image: redis/redisinsight:latest
+    container_name: redis_ui
+    restart: always
+    networks:
+      - traefik
+    ports:
+      - "5540:5540"
+    environment:
+      RI_REDIS_HOST: ${REDIS_HOST}
+      RI_REDIS_PORT: ${REDIS_PORT}
+      RI_REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      - cache
+    volumes:
+      - redisinsight_data:/data
+
+# # асинхронный брокер сообщений Kafka
+  broker_kafka:
+    container_name: auth_kafka
+    networks:
+      - traefik
+    image: apache/kafka-native:4.2.1
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@auth_kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXT_HOST://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://auth_kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+# асинхронный брокер сообщений Nats
+  broker_nats:
+    container_name: nats
+    networks:
+      - traefik
+    image: nats:2.14-alpine3.22
+    command: nats-server --user ${NATS_USER} --pass ${NATS_PASSWORD} -m 8222
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+
+networks:
+  traefik:
+    external: true
+
+# том для хранения данных PostgreSQL, Redis и Kafka
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:
+  redisinsight_data:

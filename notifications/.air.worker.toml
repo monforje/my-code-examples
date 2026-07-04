@@ -1,0 +1,56 @@
+#:schema https://json.schemastore.org/any.json
+
+root = "."
+tmp_dir = "tmp"
+
+env_files = [".env"]
+
+[build]
+cmd = "go build -mod=vendor -o ./tmp/worker ./cmd/notifications-worker"
+bin = "tmp/worker"
+entrypoint = ["./tmp/worker"]
+full_bin = "APP_USER=air ./tmp/worker"
+include_ext = ["go", "tpl", "tmpl", "html"]
+exclude_dir = ["assets", "tmp", "vendor", "frontend/node_modules"]
+include_dir = []
+include_file = []
+exclude_file = []
+exclude_regex = ["_test\\.go"]
+exclude_unchanged = true
+ignore_dangerous_root_dir = false
+follow_symlink = true
+log = "air.log"
+poll = false
+poll_interval = 500
+delay = 0
+stop_on_error = true
+send_interrupt = false
+kill_delay = 500
+rerun = false
+rerun_delay = 500
+
+[build.windows]
+cmd = "go build -mod=vendor -o ./tmp/worker.exe ./cmd/notifications-worker"
+bin = "tmp\\worker.exe"
+entrypoint = ["tmp\\worker.exe"]
+
+[log]
+time = false
+main_only = false
+silent = false
+
+[color]
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
+
+[misc]
+clean_on_exit = true
+
+[screen]
+clear_on_rebuild = true
+keep_scroll = true
+
+[proxy]
+enabled = false

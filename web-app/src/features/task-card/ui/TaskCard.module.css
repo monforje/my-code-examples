@@ -1,0 +1,111 @@
+.card {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: var(--cd-border-base) solid var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  background: var(--cd-surface);
+  color: var(--cd-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color var(--cd-duration-base) var(--cd-ease-out),
+    background var(--cd-duration-base) var(--cd-ease-out),
+    box-shadow var(--cd-duration-base) var(--cd-ease-out),
+    transform var(--cd-duration-fast) var(--cd-ease-out);
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: var(--cd-primary);
+  box-shadow: var(--cd-shadow-soft);
+  transform: translateY(-1px);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: var(--task-card-padding, var(--cd-space-5));
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Compact mode */
+.compact {
+  --task-card-padding: var(--cd-space-4);
+}
+
+.compact .header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--cd-space-2);
+}
+
+/* Wide mode */
+.wide .title {
+  font-size: var(--cd-text-lg);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cd-space-3);
+  margin-bottom: var(--cd-space-3);
+}
+
+.title {
+  font-size: var(--cd-text-md);
+  font-weight: var(--cd-weight-extrabold);
+  color: var(--cd-text);
+  line-height: var(--cd-leading-snug);
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.desc {
+  font-size: var(--cd-text-sm);
+  color: var(--cd-text-muted);
+  line-height: var(--cd-leading-relaxed);
+  margin-bottom: var(--cd-space-4);
+  flex: 1 1 0;
+}
+
+.footer {
+  margin-top: auto;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cd-space-2);
+  margin-bottom: var(--cd-space-3);
+}
+
+.lang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--cd-text-subtle);
+}
+
+.lang svg {
+  display: block;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cd-space-1);
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+  }
+}

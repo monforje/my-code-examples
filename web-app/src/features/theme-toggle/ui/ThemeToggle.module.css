@@ -1,0 +1,33 @@
+.toggle {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--cd-border-thin) solid var(--cd-border-muted);
+  border-radius: var(--cd-radius-xs);
+  background: var(--cd-surface);
+  color: var(--cd-text-muted);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.toggle:hover {
+  color: var(--cd-text);
+  background: var(--cd-surface-soft);
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s var(--cd-ease-out);
+}
+
+.light {
+  transform: rotate(0deg);
+}
+
+.dark {
+  transform: rotate(360deg);
+}
